@@ -16,13 +16,13 @@
     "EMAIL": "",
     "PASSWORD": "",
     "OTPKEY": "",
-    "BOTNAME": "Your-Father",
+    "BOTNAME": "ZeroEx Bot",
     "PREFIX": "/",
     "ADMINBOT": [
-        "100037743553265"
+        "100048258944357"
     ],
     "NDH": [
-        "100037743553265"
+        "100048258944357"
     ],
     "DATABASE": {
         "sqlite": {
