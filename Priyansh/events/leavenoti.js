@@ -24,12 +24,10 @@ module.exports.run = async function({ api, event, Users, Threads }) {
 	const type = (event.author == event.logMessageData.leftParticipantFbId) ? "leave" : "removed";
 
 	let msg = data.customLeave || 
-` {name} 👈🏻 has left the group.... {type} 
+` {name} is no longer in the group.
+Reason {type}
 
-{name} group e duksos kno na thakar hoile.
-Goodbye and take care! 🥲💔
-
-[❤️‍🔥] Wishing you a good {session} || {time}`;
+Action Time {session} || {time}`;
 
 	msg = msg.replace(/\{name}/g, name)
 			 .replace(/\{type}/g, type)
