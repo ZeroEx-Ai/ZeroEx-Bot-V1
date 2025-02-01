@@ -8,7 +8,7 @@ module.exports.config = {
 
 module.exports.run = async({ event, api, Threads, Users }) => {
 const moment = require("moment-timezone");
-time = moment.tz('Asia/Kolkata').format('HH:mm:ss');
+time = moment.tz('Asia/Dhaka').format('HH:mm:ss');
 var cantsend = [];
     var allThread = global.data.allThreadID || [];
     if (time == "16:52:00") {
