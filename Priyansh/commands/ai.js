@@ -4,41 +4,46 @@ module.exports.config = {
     version: "1.0.0",
     hasPermssion: 0,
     credits: "𝐏𝐫𝐢𝐲𝐚𝐧𝐬𝐡 𝐑𝐚𝐣𝐩𝐮𝐭",
-    description: "BlackBoxAi by Priyansh",
+    description: "AI by Priyansh (Powered by Gemini)",
     commandCategory: "ai",
     usages: "[ask]",
     cooldowns: 2,
-    dependecies: {
+    dependencies: {
         "axios": "1.4.0"
     }
 };
 
-module.exports.run = async function ({ api, event, args, Users }) {
-
+module.exports.run = async function ({ api, event, args }) {
   const { threadID, messageID } = event;
+  const query = args.join(" ");
 
-  const query = encodeURIComponent(args.join(" "));
+  if (!query) return api.sendMessage("Please type your question...", threadID, messageID);
 
-  var name = await Users.getNameUser(event.senderID);
+  try {
+    api.setMessageReaction("⌛", messageID, () => {}, true);
+    api.sendMessage("🔍 Searching for an answer...", threadID, messageID);
 
-  if (!args[0]) return api.sendMessage("Please type a message...", threadID, messageID );
-  
-  api.sendMessage("Searching for an answer, please wait...", threadID, messageID);
+    // Fetch dynamic API endpoint
+    const apiList = await axios.get('https://raw.githubusercontent.com/MOHAMMAD-NAYAN/Nayan/main/api.json');
+    const geminiAPI = apiList.data.gemini;
 
-  try{
+    // Send request to Gemini API
+    const response = await axios.post(`${geminiAPI}/gemini`, {
+      modelType: "text_only",
+      prompt: query
+    });
 
-    api.setMessageReaction("⌛", event.messageID, () => { }, true);
-
-    const res = await axios.get(`https://blackboxai-tlh1.onrender.com/api/blackboxai?query=${encodeURIComponent(query)}`);
-
-    const data = res.data.priyansh;
-
-    api.sendMessage(data, event.threadID, event.messageID);
-
-    api.setMessageReaction("✅", event.messageID, () => { }, true);
-}
-  catch (error) {
-    console.error('Error fetching package.json:', error);
-  api.sendMessage("An error occurred while fetching data. Please try again later.", event.threadID, event.messageID);
+    const result = response.data?.result;
+    
+    if (result) {
+      api.sendMessage(`🤖 Gemini's Response:\n\n${result}`, threadID, messageID);
+      api.setMessageReaction("✅", messageID, () => {}, true);
+    } else {
+      throw new Error("No valid response from API");
+    }
+  } catch (error) {
+    console.error(error);
+    api.sendMessage("❌ An error occurred while processing your request.", threadID, messageID);
+    api.setMessageReaction("❌", messageID, () => {}, true);
   }
 };
