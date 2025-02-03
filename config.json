@@ -16,6 +16,7 @@
     "EMAIL": "",
     "PASSWORD": "",
     "OTPKEY": "",
+    "ADMIN": "Adi.0X",
     "BOTNAME": "ZeroEx Bot",
     "PREFIX": "/",
     "ADMINBOT": [
