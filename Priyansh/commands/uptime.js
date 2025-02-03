@@ -130,7 +130,7 @@ registerFont(__dirname + `/tad/CaviarDreams.ttf`, {
     const imageBuffer = canvas.toBuffer();
    fs.writeFileSync(pathImg, imageBuffer);
   return api.sendMessage({
-    body: `┃======{ 𝗨𝗣𝗧𝗜𝗠𝗘 𝗥𝗢𝗕𝗢𝗧 }======┃\n\n→ Bot worked  ${hours} hours ${minutes} minutes ${seconds} seconds \n•━━━━━━━━━━━━━━━━━━━━━━━━•\n➠ 𝐏𝐫𝐢𝐲𝐚𝐧𝐬𝐡 𝐑𝐚𝐣𝐩𝐮𝐭\n➠ Bo𝐭 Name: ${global.config.BOTNAME}\n➠ Bot Prefix: ${global.config.PREFIX}\n➠ Commands count: ${commands.size}\n➠ Total Users: ${global.data.allUserID.length}\n➠ Total thread: ${global.data.allThreadID.length}\n➠ CPU in use:: ${pidusage.cpu.toFixed(1)}%\n➠ RAM: ${byte2mb(pidusage.memory)}\n➠ Ping: ${Date.now() - timeStart}ms\n➠ Character ID𝐭: ${id}\n•━━━━━━━━━━━━━━━━━━━━━━━━•\n[ ${timeNow} ]`,
+    body: `╭───𝗨𝗣𝗧𝗜𝗠𝗘───◆\n⋄Running Time: ${hours} hours ${minutes} minutes ${seconds} seconds\n⋄Owner: ${global.config.ADMIN}\n⋄Bot Name: ${global.config.BOTNAME}\n⋄Bot Name: ${global.config.PREFIX}\n⋄Commands count: ${commands.size}\n⋄Total Users: ${global.data.allUserID.length}\n⋄Total thread: ${global.data.allThreadID.length}\n⋄CPU in use: ${pidusage.cpu.toFixed(1)}%\n⋄RAM: ${byte2mb(pidusage.memory)}\n⋄Ping: ${Date.now() - timeStart}ms\n⋄Character ID: ${id}\n⋄Time Now: ${timeNow}\n╰──────────◆`,
     attachment: fs.createReadStream(pathImg)
   },
     event.threadID,
