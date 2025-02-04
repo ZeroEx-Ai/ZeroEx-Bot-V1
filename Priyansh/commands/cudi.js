@@ -3,7 +3,7 @@ let isCudiActive = true; // ডিফল্টভাবে চালু থা�
 module.exports.config = {
     name: "cudi",
     version: "1.0.0",
-    hasPermssion: 1,
+    hasPermssion: "1",
     credits: "...",
     description: "বন্ধুর ট্যাগ ট্যাগ করুন\nসেই ব্যক্তিকে আত্মা কলিং বলা যেতে পারে",
     commandCategory: "nsfw",
