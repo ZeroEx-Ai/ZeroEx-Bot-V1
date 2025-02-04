@@ -17,10 +17,13 @@ module.exports.config = {
 module.exports.run = async function ({ api, event, args }) {
     const { threadID, messageID, messageReply } = event;
 
-    // যদি রিপ্লাই করা হয়, তাহলে রিপ্লাইয়ের টেক্সট নেওয়া হবে
-    const query = args.length > 0 ? args.join(" ") : messageReply?.body;
+    // নতুন মেসেজ ও রিপ্লাই মেসেজ একসাথে যোগ করা
+    let query = args.join(" ");
+    if (messageReply?.body) {
+        query = messageReply.body + " " + query;
+    }
 
-    if (!query) return api.sendMessage("Please type your question...", threadID, messageID);
+    if (!query.trim()) return api.sendMessage("Please type your question...", threadID, messageID);
 
     try {
         api.setMessageReaction("⌛", messageID, () => {}, true);
