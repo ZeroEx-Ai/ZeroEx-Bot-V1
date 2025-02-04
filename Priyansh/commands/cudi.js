@@ -3,7 +3,7 @@ let isCudiActive = true; // ডিফল্টভাবে চালু থা�
 module.exports.config = {
     name: "cudi",
     version: "1.0.0",
-    hasPermssion: "1",
+    hasPermssion: 1,
     credits: "...",
     description: "বন্ধুর ট্যাগ ট্যাগ করুন\nসেই ব্যক্তিকে আত্মা কলিং বলা যেতে পারে",
     commandCategory: "nsfw",
@@ -19,6 +19,11 @@ module.exports.run = async function({ api, event, args }) {
     if (args[0] === "off") {  
         isCudiActive = false;  
         return api.sendMessage("✅ Cudi বন্ধ করা হয়েছে!", event.threadID);
+    }
+
+    if (args[0] === "on") {  
+        isCudiActive = true;  
+        return api.sendMessage("✅ Cudi চালু করা হয়েছে!", event.threadID);
     }
 
     if (!isCudiActive) return api.sendMessage("❌ Cudi বর্তমানে বন্ধ রয়েছে! অন করতে `/cudi on` লিখুন।", event.threadID);
