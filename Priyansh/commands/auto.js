@@ -2,11 +2,10 @@ module.exports = {
   config:{
     name: "auto",
     version: "0.0.2",
-    permission: 0,
-    prefix: true,
+    hasPermssion: 0,
     credits: "Nayan",
     description: "auto video download",
-    category: "user",
+    commandCategory: "user",
     usages: "",
     cooldowns: 5,
 },
