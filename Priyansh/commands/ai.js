@@ -1,4 +1,5 @@
 const axios = require("axios");
+
 module.exports.config = {
     name: "ai",
     version: "1.0.0",
@@ -14,36 +15,38 @@ module.exports.config = {
 };
 
 module.exports.run = async function ({ api, event, args }) {
-  const { threadID, messageID } = event;
-  const query = args.join(" ");
+    const { threadID, messageID, messageReply } = event;
 
-  if (!query) return api.sendMessage("Please type your question...", threadID, messageID);
+    // যদি রিপ্লাই করা হয়, তাহলে রিপ্লাইয়ের টেক্সট নেওয়া হবে
+    const query = args.length > 0 ? args.join(" ") : messageReply?.body;
 
-  try {
-    api.setMessageReaction("⌛", messageID, () => {}, true);
-    api.sendMessage("🔍 Searching for an answer...", threadID, messageID);
+    if (!query) return api.sendMessage("Please type your question...", threadID, messageID);
 
-    // Fetch dynamic API endpoint
-    const apiList = await axios.get('https://raw.githubusercontent.com/MOHAMMAD-NAYAN/Nayan/main/api.json');
-    const geminiAPI = apiList.data.gemini;
+    try {
+        api.setMessageReaction("⌛", messageID, () => {}, true);
+        api.sendMessage("🔍 Searching for an answer...", threadID, messageID);
 
-    // Send request to Gemini API
-    const response = await axios.post(`${geminiAPI}/gemini`, {
-      modelType: "text_only",
-      prompt: query
-    });
+        // Fetch dynamic API endpoint
+        const apiList = await axios.get('https://raw.githubusercontent.com/MOHAMMAD-NAYAN/Nayan/main/api.json');
+        const geminiAPI = apiList.data.gemini;
 
-    const result = response.data?.result;
-    
-    if (result) {
-      api.sendMessage(`🤖 Gemini's Response:\n\n${result}`, threadID, messageID);
-      api.setMessageReaction("✅", messageID, () => {}, true);
-    } else {
-      throw new Error("No valid response from API");
+        // Send request to Gemini API
+        const response = await axios.post(`${geminiAPI}/gemini`, {
+            modelType: "text_only",
+            prompt: query
+        });
+
+        const result = response.data?.result;
+
+        if (result) {
+            api.sendMessage(`🤖 Gemini's Response:\n\n${result}`, threadID, messageID);
+            api.setMessageReaction("✅", messageID, () => {}, true);
+        } else {
+            throw new Error("No valid response from API");
+        }
+    } catch (error) {
+        console.error(error);
+        api.sendMessage("❌ An error occurred while processing your request.", threadID, messageID);
+        api.setMessageReaction("❌", messageID, () => {}, true);
     }
-  } catch (error) {
-    console.error(error);
-    api.sendMessage("❌ An error occurred while processing your request.", threadID, messageID);
-    api.setMessageReaction("❌", messageID, () => {}, true);
-  }
 };
