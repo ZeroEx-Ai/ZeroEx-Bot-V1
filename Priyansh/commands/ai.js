@@ -17,33 +17,45 @@ module.exports.config = {
 module.exports.run = async function ({ api, event, args }) {
     const { threadID, messageID, messageReply } = event;
 
+    // Check if the reply has an image attachment
+    const isImageReply = messageReply?.attachments && messageReply.attachments[0]?.type === 'image';
+
     let query = args.join(" ");
     
-    if (messageReply?.attachments && messageReply.attachments[0]?.type === 'image') {
-        // If the reply contains an image
+    if (isImageReply) {
+        // If the reply contains an image, process the image and text
         const imageUrl = messageReply.attachments[0]?.url;
-        
-        // Call an image analysis API (Replace with actual image analysis API)
+
         try {
             api.setMessageReaction("⌛", messageID, () => {}, true);
-            api.sendMessage("🔍 Analyzing the image...", threadID, messageID);
+            api.sendMessage("🔍 Analyzing the image and your query...", threadID, messageID);
 
-            // Example image prompt generation API (this part needs to be adapted to your actual API or logic)
-            const imagePromptResponse = await axios.post('https://api.example.com/analyze-image', {
-                imageUrl: imageUrl
+            // Process the image and send both the image URL and text to Gemini (assuming Gemini supports this)
+            const apiList = await axios.get('https://raw.githubusercontent.com/MOHAMMAD-NAYAN/Nayan/main/api.json');
+            const geminiAPI = apiList.data.gemini;
+
+            // Make a request to the Gemini API with both image and text prompt
+            const response = await axios.post(`${geminiAPI}/gemini`, {
+                modelType: "image_and_text",  // Assuming this is the correct type for multimodal input
+                imageUrl: imageUrl,           // Image URL to be processed
+                prompt: query                 // Text prompt to go along with the image
             });
 
-            const imagePrompt = imagePromptResponse.data?.prompt || "Could not generate a prompt for this image.";
+            const result = response.data?.result;
 
-            api.sendMessage(`🖼️ Image Analysis Prompt:\n\n${imagePrompt}`, threadID, messageID);
-            api.setMessageReaction("✅", messageID, () => {}, true);
+            if (result) {
+                api.sendMessage(`🤖 AI Response based on the image and your query:\n\n${result}`, threadID, messageID);
+                api.setMessageReaction("✅", messageID, () => {}, true);
+            } else {
+                throw new Error("No valid response from API");
+            }
         } catch (error) {
             console.error(error);
-            api.sendMessage("❌ An error occurred while analyzing the image.", threadID, messageID);
+            api.sendMessage("❌ An error occurred while processing the image and your query.", threadID, messageID);
             api.setMessageReaction("❌", messageID, () => {}, true);
         }
     } else {
-        // If no image is found, proceed with the regular query
+        // If no image, proceed with the normal query
         if (messageReply?.body) {
             query = messageReply.body + " " + query;
         }
@@ -54,11 +66,9 @@ module.exports.run = async function ({ api, event, args }) {
             api.setMessageReaction("⌛", messageID, () => {}, true);
             api.sendMessage("🔍 Searching for an answer...", threadID, messageID);
 
-            // Fetch dynamic API endpoint
             const apiList = await axios.get('https://raw.githubusercontent.com/MOHAMMAD-NAYAN/Nayan/main/api.json');
             const geminiAPI = apiList.data.gemini;
 
-            // Send request to Gemini API
             const response = await axios.post(`${geminiAPI}/gemini`, {
                 modelType: "text_only",
                 prompt: query
