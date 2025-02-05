@@ -20,11 +20,11 @@ module.exports.run = async function ({ api, event, args, Threads }) {
   if (!args[0]) {
     return api.sendMessage(
       `╭───𝗣𝗿𝗼𝗳𝗶𝗹𝗲 𝗣𝗶𝗰───◆\n` +
-        `⋄ Get Group Photo: ${prefix}${mn} box\n` +
-        `⋄ Get Profile Photo by user ID: ${prefix}${mn} id [user id]\n` +
-        `⋄ Get Profile Photo by Facebook link: ${prefix}${mn} link [fb link]\n` +
-        `⋄ Get your own Profile Photo: ${prefix}${mn}\n` +
-        `⋄ Get Profile Photo of mentioned user: ${prefix}${mn} user [@mention]\n╰──────────◆`,
+        `⋄ Get Group Photo: \n	${prefix}${mn} box\n` +
+        `⋄ Get Profile Photo by user ID: \n	${prefix}${mn} id [user id]\n` +
+        `⋄ Get Profile Photo by Facebook link: \n	${prefix}${mn} link [fb link]\n` +
+        `⋄ Get your own Profile Photo: \n	${prefix}${mn}\n` +
+        `⋄ Get Profile Photo of mentioned user: \n	${prefix}${mn} user [@mention]\n╰──────────◆`,
       event.threadID,
       event.messageID
     );
