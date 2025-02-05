@@ -27,7 +27,7 @@ module.exports.languages = {
 
         "cantGetPendingList": "Can't get the pending list!",
         "returnListPending": "╭───PENDING───◆\n⋄Total %1 groups are pending approval.\n\n%2 \n\n⋄Reply numbers for approval.
-⋄Reply C(number) for removal.\n╰──────────◆",
+⋄Reply cancel/C(number) for removal.\n╰──────────◆",
         "returnListClean": "╭───PENDING───◆\n⋄No groups are pending approval.\n╰──────────◆"
     }
 }
