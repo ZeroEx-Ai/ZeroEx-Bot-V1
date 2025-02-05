@@ -1,7 +1,7 @@
 module.exports.config = {
 	name: "pending",
 	version: "1.0.5",
-	credits: "Adi.0X",
+	credits: "𝐏𝐫𝐢𝐲𝐚𝐧𝐬𝐡 𝐑𝐚𝐣𝐩𝐮𝐭",
 	hasPermssion: 2,
 	description: "Manage bot's waiting messages",
 	commandCategory: "system",
@@ -21,13 +21,12 @@ module.exports.languages = {
     },
     "en": {
         "invaildNumber": "%1 is not an invalid number",
-        "cancelSuccess": "Refused %1 Group!",
-        "notiBox": "Bot Connected Successfully!\nType "Prefix" for my prefix.",
-        "approveSuccess": "Approved successfully %1 Group",
+        "cancelSuccess": "Refused %1 Group",
+        "notiBox": "Bot Connected Successfully!\nType Prefix For Bot Command Prefix",
+        "approveSuccess": "Approved successfully %1 threads!",
 
         "cantGetPendingList": "Can't get the pending list!",
-        "returnListPending": "╭───PENDING───◆\n⋄Total %1 groups are pending approval.\n\n%2 \n\n⋄Reply numbers for approval.
-⋄Reply cancel/C(number) for removal.\n╰──────────◆",
+        "returnListPending": "╭───PENDING───◆\n⋄Total %1 groups are pending approval.\n\n%2 \n\n⋄Reply numbers for approval.\n⋄Reply cancel/C(number) for removal.\n╰──────────◆",
         "returnListClean": "╭───PENDING───◆\n⋄No groups are pending approval.\n╰──────────◆"
     }
 }
@@ -70,7 +69,7 @@ module.exports.run = async function({ api, event, getText }) {
 
 	const list = [...spam, ...pending].filter(group => group.isSubscribed && group.isGroup);
 
-    for (const single of list) msg += `«${index++}» ${single.name}〘${single.threadID}〙\n`;
+    for (const single of list) msg += `»${index++}« ${single.name}〘${single.threadID}〙\n`;
 
     if (list.length != 0) return api.sendMessage(getText("returnListPending", list.length, msg), threadID, (error, info) => {
 		global.client.handleReply.push({
