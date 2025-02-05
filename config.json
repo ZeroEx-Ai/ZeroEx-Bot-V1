@@ -17,6 +17,7 @@
     "PASSWORD": "",
     "OTPKEY": "",
     "ADMIN": "Adi.0X",
+    "ADMINFB": "https://www.facebook.com/Adi.0X",
     "BOTNAME": "ZeroEx Bot",
     "PREFIX": "/",
     "ADMINBOT": [
