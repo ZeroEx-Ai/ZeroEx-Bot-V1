@@ -1,4 +1,6 @@
 const axios = require("axios");
+const fs = require("fs");
+const path = require("path");
 
 module.exports.config = {
     name: "ai",
@@ -10,35 +12,38 @@ module.exports.config = {
     usages: "[ask]",
     cooldowns: 2,
     dependencies: {
-        "axios": "1.4.0"
+        "axios": "1.4.0",
+        "fs": "latest",
+        "path": "latest"
     }
 };
 
 module.exports.run = async function ({ api, event, args }) {
     const { threadID, messageID, messageReply } = event;
 
-    // Check if the reply has an image attachment
+    let query = args.join(" ");
     const isImageReply = messageReply?.attachments && messageReply.attachments[0]?.type === 'image';
 
-    let query = args.join(" ");
-    
     if (isImageReply) {
-        // If the reply contains an image, process the image and text
         const imageUrl = messageReply.attachments[0]?.url;
 
         try {
             api.setMessageReaction("⌛", messageID, () => {}, true);
-            api.sendMessage("🔍 Analyzing the image and your query...", threadID, messageID);
+            api.sendMessage("🔍 Processing the image and your question...", threadID, messageID);
 
-            // Process the image and send both the image URL and text to Gemini (assuming Gemini supports this)
+            // Download the image
+            const imageResponse = await axios.get(imageUrl, { responseType: "arraybuffer" });
+            const base64Image = Buffer.from(imageResponse.data, "binary").toString("base64");
+
+            // Fetch Gemini API
             const apiList = await axios.get('https://raw.githubusercontent.com/MOHAMMAD-NAYAN/Nayan/main/api.json');
             const geminiAPI = apiList.data.gemini;
 
-            // Make a request to the Gemini API with both image and text prompt
+            // Send Image + Text Query to Gemini
             const response = await axios.post(`${geminiAPI}/gemini`, {
-                modelType: "image_and_text",  // Assuming this is the correct type for multimodal input
-                imageUrl: imageUrl,           // Image URL to be processed
-                prompt: query                 // Text prompt to go along with the image
+                modelType: "image_and_text",
+                image: base64Image,  // Send image as base64
+                prompt: query
             });
 
             const result = response.data?.result;
@@ -51,11 +56,10 @@ module.exports.run = async function ({ api, event, args }) {
             }
         } catch (error) {
             console.error(error);
-            api.sendMessage("❌ An error occurred while processing the image and your query.", threadID, messageID);
+            api.sendMessage("❌ Failed to process the image. Make sure the API supports image input.", threadID, messageID);
             api.setMessageReaction("❌", messageID, () => {}, true);
         }
     } else {
-        // If no image, proceed with the normal query
         if (messageReply?.body) {
             query = messageReply.body + " " + query;
         }
