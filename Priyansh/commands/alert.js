@@ -5,7 +5,7 @@ module.exports.config = {
   name: 'alert',
   version: '1.0.1',
   hasPermssion: 0,
-  credits: 'Joshua Sy',
+  credits: 'Adi.0X',
   description: 'Generates an alert image with custom text using the Popcat API',
   commandCategory: 'image',
   usages: 'Add text lmao',
