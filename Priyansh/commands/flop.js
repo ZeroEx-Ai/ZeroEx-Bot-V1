@@ -3,7 +3,7 @@ module.exports = {
     name: "flop",
     version: "1.0.1",
     hasPermission: 1,
-    credits: "Đoán Xem",
+    credits: "Adi.0X",
     description: "",
     commandCategory: "system",
     usages: "flop",
