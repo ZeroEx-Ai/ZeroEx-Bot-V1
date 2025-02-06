@@ -3,7 +3,7 @@ module.exports.config = {
     name: 'autoban',
     version: '1.0.0',
     hasPermssion: 0,
-    credits: 'ManhG',
+    credits: 'Adi.0X',
     description: 'People who curse bots will be automatically banned from the system <3',
     commandCategory: 'noprefix',
     usages: '',
