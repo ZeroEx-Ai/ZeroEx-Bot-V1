@@ -4,8 +4,8 @@ module.exports.config = {
     name: "cudi",
     version: "1.0.0",
     hasPermssion: 1,
-    credits: "...",
-    description: "বন্ধুর ট্যাগ ট্যাগ করুন\nসেই ব্যক্তিকে আত্মা কলিং বলা যেতে পারে",
+    credits: "Adi.0X",
+    description: "মুরগি ট্যাগ করুন\nসেই ব্যক্তিকে আত্মা কলিং বলা যেতে পারে",
     commandCategory: "nsfw",
     usages: " please @mention",
     cooldowns: 10,
@@ -30,7 +30,7 @@ module.exports.run = async function({ api, event, args }) {
     
     var mention = Object.keys(event.mentions)[0];
     if (!mention) 
-        return api.sendMessage("আপনি কাকে ট্যাগ করতে চান, দয়া করে @mention করুন!", event.threadID);
+        return api.sendMessage("বস,আপনি কাকে চুদতে চান, দয়া করে @mention করুন!", event.threadID);
 
     let name = event.mentions[mention];
     var arraytag = [{ id: mention, tag: name }];
