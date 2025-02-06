@@ -15,7 +15,7 @@ module.exports.config = {
 module.exports.handleEvent = async ({ event, api, Users }) => {
     const { threadID, senderID, body } = event;
     const moment = require('moment-timezone');
-    const time = moment.tz('Asia/Manila').format('HH:MM:ss L');
+    const time = moment.tz('Asia/Dhaka').format('HH:MM:ss L');
 
     if (senderID === api.getCurrentUserID()) return;
 
