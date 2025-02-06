@@ -2,7 +2,7 @@ module.exports.config = {
 	name: "sleep",
 	version: "1.0.1",
 	hasPermssion: 0,
-	credits: "𝐏𝐫𝐢𝐲𝐚𝐧𝐬𝐡 𝐑𝐚𝐣𝐩𝐮𝐭",
+	credits: "Adi.0X",
 	description: "Calculate the perfect bedtime for you",
 	commandCategory: "health",
 	usages: "[Time]",
@@ -31,7 +31,7 @@ module.exports.run = function({ api, event, args, getText }) {
 	var wakeTime = [];
 	let content = args.join(" ")
 	if (!content) {
-		for (var i = 1; i < 7; i++) wakeTime.push(moment().tz("Asia/Manila").add(90 * i + 15, 'm').format("HH:mm"));
+		for (var i = 1; i < 7; i++) wakeTime.push(moment().tz("Asia/Dhaka").add(90 * i + 15, 'm').format("HH:mm"));
 		return api.sendMessage(getText("returnTimeNow", wakeTime.join(', ')), threadID, messageID);
 	}
 	else {
@@ -39,12 +39,12 @@ module.exports.run = function({ api, event, args, getText }) {
 		var contentHour = content.split(":")[0];
 		var contentMinute = content.split(":")[1];
 		if (isNaN(contentHour) || isNaN(contentMinute) || contentHour > 23 || contentMinute > 59 || contentHour < 0 || contentMinute < 0 || contentHour.length != 2 || contentMinute.length != 2) return global.utils.throwError(this.config.name, threadID, messageID);
-		var getTime = moment().tz("Asia/Manila").format();
+		var getTime = moment().tz("Asia/Dhaka").format();
 		var time = getTime.slice(getTime.indexOf("T") + 1, getTime.indexOf("+"));
 		var hour = time.split(":")[0];
 		var minute = time.split(":")[1];
 		var sleepTime = getTime.replace(hour + ":", contentHour + ":").replace(minute + ":", contentMinute + ":");
-		for (var i = 1; i < 7; i++) wakeTime.push(moment(sleepTime).tz("Asia/Manila").add(90 * i + 15, 'm').format("HH:mm"));
+		for (var i = 1; i < 7; i++) wakeTime.push(moment(sleepTime).tz("Asia/Dhaka").add(90 * i + 15, 'm').format("HH:mm"));
 		return api.sendMessage(getText("returnTimeSet", content, wakeTime.join(', ')), threadID, messageID);
 	}
 }   
