@@ -8,7 +8,7 @@ module.exports = {
     name: "uptime3",
     version: "1.0.0",
     hasPermssion: 0,
-    credits: "𝐏𝐫𝐢𝐲𝐚𝐧𝐬𝐡 𝐑𝐚𝐣𝐩𝐮𝐭",
+    credits: "Adi.0X",
     description: "test",
     commandCategory: "box",
     usages: "test",
@@ -45,7 +45,7 @@ module.exports = {
       const options = { year: "numeric", month: "numeric", day: "numeric" };
       const date = currentDate.toLocaleDateString("en-US", options);
       const time = currentDate.toLocaleTimeString("en-US", {
-        timeZone: "Asia/Kolkata",
+        timeZone: "Asia/Dhaka",
         hour12: true,
       });
 
@@ -56,19 +56,18 @@ module.exports = {
 
       const ping = Date.now() - timeStart;
 
-      let pingStatus = "⛔| 𝖡𝖺𝖽 𝖲𝗒𝗌𝗍𝖾𝗆";
+      let pingStatus = "☒ | 𝖡𝖺𝖽 𝖲𝗒𝗌𝗍𝖾𝗆";
       if (ping < 1000) {
-        pingStatus = "✅| 𝖲𝗆𝗈𝗈𝗍𝗁 𝖲𝗒𝗌𝗍𝖾𝗆";
+        pingStatus = "☑ | 𝖲𝗆𝗈𝗈𝗍𝗁 𝖲𝗒𝗌𝗍𝖾𝗆";
       }
-      const systemInfo = `♡   ∩_∩
- （„• ֊ •„)♡
-╭─∪∪────────────⟡
-│ 𝗨𝗣𝗧𝗜𝗠𝗘 𝗜𝗡𝗙𝗢
+      const systemInfo = `
+╭───────────────⟡
+│		𝗨𝗣𝗧𝗜𝗠𝗘 𝗜𝗡𝗙𝗢
 ├───────────────⟡
-│ ⏰ 𝗥𝗨𝗡𝗧𝗜𝗠𝗘
+│		𝗥𝗨𝗡𝗧𝗜𝗠𝗘
 │  ${uptimeFormatted}
 ├───────────────⟡
-│ 👑 𝗦𝗬𝗦𝗧𝗘𝗠 𝗜𝗡𝗙𝗢
+│		𝗦𝗬𝗦𝗧𝗘𝗠 𝗜𝗡𝗙𝗢
 │𝙾𝚂: ${os.type()} ${os.arch()}
 │𝙻𝙰𝙽𝙶 𝚅𝙴𝚁: ${process.version}
 │𝙲𝙿𝚄 𝙼𝙾𝙳𝙴𝙻: ${os.cpus()[0].model}
@@ -76,7 +75,7 @@ module.exports = {
 │𝙲𝙿𝚄 𝚄𝚂𝙰𝙶𝙴: ${cpuUsage.toFixed(1)}%
 │𝚁𝙰𝙼 𝚄𝚂𝙶𝙴: ${process.memoryUsage().heapUsed / 1024 / 1024} MB;
 ├───────────────⟡
-│ ✅ 𝗢𝗧𝗛𝗘𝗥 𝗜𝗡𝗙𝗢
+│		𝗢𝗧𝗛𝗘𝗥 𝗜𝗡𝗙𝗢
 │𝙳𝙰𝚃𝙴: ${date}
 │𝚃𝙸𝙼𝙴: ${time}
 │𝙿𝙸𝙽𝙶: ${ping}𝚖𝚜
