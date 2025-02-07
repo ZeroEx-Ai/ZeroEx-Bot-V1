@@ -1,8 +1,8 @@
 module.exports.config = {
-    name: "menu2",
+    name: "menu",
     version: "1.0.0",
     hasPermssion: 0,
-    credits: "Adi.0X, Modified by You",
+    credits: "Adi.0X",
     description: "Menu command with categorized permissions",
     usages: "/menu user | /menu admin | /menu owner",
     commandCategory: "system",
@@ -24,22 +24,20 @@ module.exports.handleReply = ({ api, event, handleReply }) => {
 
         if (handleReply.type == "cmd_info") {
             let command_config = commands.get(dataAfter).config;
-            msg += `${command_config.commandCategory.toLowerCase()}\n`;
-            msg += `\n+ Name: ${dataAfter}`;
-            msg += `\n+ Description: ${command_config.description}`;
-            msg += `\n+ Usage: ${(command_config.usages) ? command_config.usages : "No specific usage"}`;
-            msg += `\n+ Cooldown: ${command_config.cooldowns || 5}s`;
-            msg += `\n+ Permission: ${(command_config.hasPermssion == 0) ? "User" : (command_config.hasPermssion == 1) ? "Group Admin" : "Bot Owner"}`;
-            msg += `\n\n» Module by ${command_config.credits} «`;
+            msg += `⟡ Name: ${dataAfter}`;
+            msg += `\n⟡ Description: ${command_config.description}`;
+            msg += `\n⟡ Usage: ${(command_config.usages) ? command_config.usages : "No specific usage"}`;
+            msg += `\n⟡ Cooldown: ${command_config.cooldowns || 5}s`;
+            msg += `\n╭───────────────⟡\n│Module by ${command_config.credits} \n╰───────────────⟡`;
         } else {
             check = true;
             let count = 0;
-            msg += `${dataAfter.group.toLowerCase()}\n`;
+            msg += `╭───────────────⟡\n│${dataAfter.group.toLowerCase()} Category\n│Command list\n├─┰─────────────⟡`;
 
             dataAfter.cmds.forEach(item => {
-                msg += `\n ${count += 1}. ${item}: ${commands.get(item).config.description}`;
+                msg += `\n│${count += 1}│ ${item}: ${commands.get(item).config.description}`;
             });
-            msg += "\n\n+ Reply with a number to view command details";
+            msg += "\n├─┸─────────────⟡\n│Reply with a number to view details\n╰───────────────⟡";
         }
     }
 
@@ -94,11 +92,11 @@ module.exports.run = function ({ api, event, args }) {
         return api.sendMessage("No commands available for this category.", threadID, messageID);
     }
 
-    let msg = `Available categories for ${args[0].toUpperCase()}:\n`;
+    let msg = `╭───────────────⟡\n│Command Categories\n│For  ${args[0].toUpperCase()}\n├─┰─────────────⟡`;
     categories.forEach((category, index) => {
-        msg += `\n${index + 1}. ${category.group}`;
+        msg += `\n│${index + 1}│ ${category.group}`;
     });
-    msg += "\n\n+ Reply with a number to view commands in that category.";
+    msg += "\n├─┸─────────────⟡\n│Reply with a number to view commands.\n╰───────────────⟡";
 
     return api.sendMessage(msg, threadID, (error, info) => {
         if (!error) {
