@@ -35,7 +35,7 @@ module.exports.handleReply = ({ api, event, handleReply }) => {
             msg += `╭───────────────⟡\n│${dataAfter.group.toLowerCase()} Category\n│Command list\n├─┰─────────────⟡`;
 
             dataAfter.cmds.forEach(item => {
-                msg += `\n│${count += 1}│ ${item}: ${commands.get(item).config.description}`;
+                msg += `\n│${count += 1}│ ${item}`;
             });
             msg += "\n├─┸─────────────⟡\n│Reply with a number to view details\n╰───────────────⟡";
         }
