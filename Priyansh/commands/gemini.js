@@ -41,7 +41,7 @@ module.exports.run = async function ({ api, event, args }) {
         const result = response.data?.result;
 
         if (result) {
-            api.sendMessage(`🤖 Gemini's Response:\n\n${result}`, threadID, messageID);
+            api.sendMessage(`${result}`, threadID, messageID);
             api.setMessageReaction("✅", messageID, () => {}, true);
         } else {
             throw new Error("No valid response from API");
