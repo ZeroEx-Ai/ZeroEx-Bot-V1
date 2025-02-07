@@ -3,11 +3,11 @@ const fs = require("fs");
 const path = require("path");
 
 module.exports.config = {
-    name: "ai",
+    name: "gemini",
     version: "1.0.0",
     hasPermssion: 0,
-    credits: "𝐏𝐫𝐢𝐲𝐚𝐧𝐬𝐡 𝐑𝐚𝐣𝐩𝐮𝐭",
-    description: "AI by Priyansh (Powered by Gemini)",
+    credits: "Adi.0X",
+    description: "Ask anything from Gemini",
     commandCategory: "ai",
     usages: "[ask]",
     cooldowns: 2,
@@ -81,7 +81,7 @@ module.exports.run = async function ({ api, event, args }) {
             const result = response.data?.result;
 
             if (result) {
-                api.sendMessage(`🤖 Gemini's Response:\n\n${result}`, threadID, messageID);
+                api.sendMessage(`${result}`, threadID, messageID);
                 api.setMessageReaction("✅", messageID, () => {}, true);
             } else {
                 throw new Error("No valid response from API");
