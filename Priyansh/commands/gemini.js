@@ -5,10 +5,10 @@ module.exports.config = {
     version: "1.0.0",
     hasPermssion: 0,
     credits: "Adi.0X",
-    description: "Chat with Gemini AI",
+    description: "Ask anything from Gemini AI",
     commandCategory: "ai",
     usages: "[ask]",
-    cooldowns: 5,
+    cooldowns: 2,
     dependencies: { "axios": "1.4.0" }
 };
 
@@ -22,37 +22,32 @@ module.exports.run = async function ({ api, event, args }) {
         query = messageReply.body + " " + query;
     }
 
-    if (!query.trim()) return api.sendMessage("❌ Please type your question...", threadID, messageID);
-
-    let config = { modelType: 'text_only', prompt: query };
-
-    // If replied message has an image, send it along
-    if (messageReply?.attachments?.length > 0) {
-        const attachment = messageReply.attachments[0];
-        config = { 
-            modelType: 'text_and_image', 
-            prompt: query, 
-            imageParts: [attachment.url] 
-        };
-    }
+    if (!query.trim()) return api.sendMessage("Please type your question...", threadID, messageID);
 
     try {
         api.setMessageReaction("⌛", messageID, () => {}, true);
         api.sendMessage("🔍 Searching for an answer...", threadID, messageID);
 
-        // Fetch Gemini API URL dynamically
+        // Gemini API URL fetch
         const apiList = await axios.get('https://raw.githubusercontent.com/MOHAMMAD-NAYAN/Nayan/main/api.json');
         const geminiAPI = apiList.data.gemini;
 
         // API request
-        const response = await axios.post(`${geminiAPI}/chat-with-gemini`, config);
-        const result = response.data?.result || "No response from Gemini.";
+        const response = await axios.post(`${geminiAPI}/gemini`, {
+            modelType: "text_only",
+            prompt: query
+        });
 
-        api.sendMessage(`🤖 Gemini's Response:\n\n${result}`, threadID, messageID);
-        api.setMessageReaction("✅", messageID, () => {}, true);
+        const result = response.data?.result;
 
+        if (result) {
+            api.sendMessage(`🤖 Gemini's Response:\n\n${result}`, threadID, messageID);
+            api.setMessageReaction("✅", messageID, () => {}, true);
+        } else {
+            throw new Error("No valid response from API");
+        }
     } catch (error) {
-        console.error("Gemini API Error:", error.response?.data || error.message);
+        console.error(error);
         api.sendMessage("❌ An error occurred while processing your request.", threadID, messageID);
         api.setMessageReaction("❌", messageID, () => {}, true);
     }
