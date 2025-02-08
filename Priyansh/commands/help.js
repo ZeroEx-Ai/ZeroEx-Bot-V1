@@ -2,7 +2,7 @@ module.exports.config = {
     name: "help",
     version: "1.0.2",
     hasPermssion: 0,
-    credits: "Adi.0X",
+    credits: "𝐏𝐫𝐢𝐲𝐚𝐧𝐬𝐡 𝐑𝐚𝐣𝐩𝙪𝙩",
     description: "Beginner's Guide",
     commandCategory: "system",
     usages: "[Tên module]",
@@ -56,16 +56,10 @@ module.exports.run = function({ api, event, args, getText }) {
         let msg = "Command List 📄\n\n";
         for (const [category, commandsList] of Object.entries(categories)) {
             msg += `${category}\n`;
-            commandsList.forEach(commandName => {
-                msg += `- ${prefix}${commandName}\n`;
-            });
-            msg += "\n";
+            msg += `${commandsList.join(", ")}\n\n`; // Join commands by commas
         }
 
-        const totalPages = Math.ceil(Object.keys(categories).length / 1); // 1 per page, change as needed for pagination
-        const pageText = `\nPage 1/${totalPages}`;
-
-        return api.sendMessage(msg + pageText, threadID, async (error, info) => {
+        return api.sendMessage(msg, threadID, async (error, info) => {
             if (autoUnsend) {
                 await new Promise(resolve => setTimeout(resolve, delayUnsend * 1000));
                 return api.unsendMessage(info.messageID);
@@ -77,7 +71,7 @@ module.exports.run = function({ api, event, args, getText }) {
     if (!command) return api.sendMessage("Command not found.", threadID, messageID);
 
     // Show command details (name, description, usages, permission)
-    const commandDetails = `Command: ${prefix}${command.config.name}
+    const commandDetails = `Command: ${command.config.name}
 Description: ${command.config.description}
 Usages: ${command.config.usages || "No usage provided"}
 Permission: ${command.config.hasPermssion == 0 ? getText("user") : (command.config.hasPermssion == 1 ? getText("adminGroup") : getText("adminBot"))}`;
