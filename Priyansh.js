@@ -3,7 +3,7 @@ const { readdirSync, readFileSync, writeFileSync, existsSync, unlinkSync, rm } =
 const { join, resolve } = require("path");
 const { execSync } = require('child_process');
 const logger = require("./utils/log.js");
-const login = require("fca-priyansh"); 
+const login = require("priyanshu-fca"); 
 const axios = require("axios");
 const listPackage = JSON.parse(readFileSync('./package.json')).dependencies;
 const listbuiltinModules = require("module").builtinModules;
@@ -21,23 +21,23 @@ global.client = new Object({
   getTime: function (option) {
         switch (option) {
             case "seconds":
-                return `${moment.tz("Asia/Kolkata").format("ss")}`;
+                return `${moment.tz("Asia/Dhaka").format("ss")}`;
             case "minutes":
-                return `${moment.tz("Asia/Kolkata").format("mm")}`;
+                return `${moment.tz("Asia/Dhaka").format("mm")}`;
             case "hours":
-                return `${moment.tz("Asia/Kolkata").format("HH")}`;
+                return `${moment.tz("Asia/Dhaka").format("HH")}`;
             case "date": 
-                return `${moment.tz("Asia/Kolkata").format("DD")}`;
+                return `${moment.tz("Asia/Dhaka").format("DD")}`;
             case "month":
-                return `${moment.tz("Asia/Kolkata").format("MM")}`;
+                return `${moment.tz("Asia/Dhaka").format("MM")}`;
             case "year":
-                return `${moment.tz("Asia/Kolkata").format("YYYY")}`;
+                return `${moment.tz("Asia/Dhaka").format("YYYY")}`;
             case "fullHour":
-                return `${moment.tz("Asia/Kolkata").format("HH:mm:ss")}`;
+                return `${moment.tz("Asia/Dhaka").format("HH:mm:ss")}`;
             case "fullYear":
-                return `${moment.tz("Asia/Kolkata").format("DD/MM/YYYY")}`;
+                return `${moment.tz("Asia/Dhaka").format("DD/MM/YYYY")}`;
             case "fullTime":
-                return `${moment.tz("Asia/Kolkata").format("HH:mm:ss DD/MM/YYYY")}`;
+                return `${moment.tz("Asia/Dhaka").format("HH:mm:ss DD/MM/YYYY")}`;
         }
   }
 });
