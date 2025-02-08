@@ -1,7 +1,7 @@
 module.exports.config = {
     name: "zdelres",
     version: "1.0.0",
-    hasPermission: 2,
+    hasPermission: 2, // You can change this value if you want to adjust the required permission level
     credits: "ZeroEx",
     description: "Remove a specific response from an input in ZeroEx chat API",
     commandCategory: "Chat bot",
@@ -18,7 +18,7 @@ module.exports.run = async function({ api, event, args }) {
     const response = args.join(" ").split("=>")[1]?.trim();
 
     if (!input || !response) {
-        return api.sendMessage("Use this format: Zdelres [input] => [response]\nExample: Zdelres hello => hi", threadID, messageID);
+        return api.sendMessage("Please use the correct format: Zdelres [input] => [response]\nExample: Zdelres hello => hi\nThis will delete the specified response.", threadID, messageID);
     }
 
     try {
@@ -27,9 +27,10 @@ module.exports.run = async function({ api, event, args }) {
         if (res.data && res.data.message) {
             return api.sendMessage(res.data.message, threadID, messageID);
         } else {
-            return api.sendMessage("Kono error hoise, porer somoy try koro.", threadID, messageID);
+            return api.sendMessage("Something went wrong, please try again later.", threadID, messageID);
         }
     } catch (error) {
-        return api.sendMessage("API te kono error hoise, later try koro.", threadID, messageID);
+        console.error(error); // Log error for debugging purposes
+        return api.sendMessage("There was an error with the API. Please try again later.", threadID, messageID);
     }
 };
