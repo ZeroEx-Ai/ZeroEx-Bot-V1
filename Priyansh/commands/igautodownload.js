@@ -1,10 +1,10 @@
 const axios = require("axios");
 const fs = require("fs-extra");
-const tempy = require("tempy");
+const path = require("path");
 
 module.exports.config = {
     name: "autovideodownloader",
-    version: "1.0.0",
+    version: "1.0.2",
     hasPermssion: 0,
     credits: "CloudyVibes Dev",
     description: "Automatically downloads videos from Facebook, Instagram, TikTok, and YouTube.",
@@ -13,8 +13,7 @@ module.exports.config = {
     cooldowns: 5,
     dependencies: {
         "axios": "latest",
-        "fs-extra": "latest",
-        "tempy": "latest"
+        "fs-extra": "latest"
     }
 };
 
@@ -30,7 +29,12 @@ module.exports.handleEvent = async function ({ api, event }) {
                     throw new Error("Invalid response from API.");
                 }
 
-                const tempFilePath = tempy.file({ extension: "mp4" });
+                // Cache folder setup
+                const cacheFolder = path.join(__dirname, "cache");
+                if (!fs.existsSync(cacheFolder)) fs.mkdirSync(cacheFolder);
+
+                const tempFilePath = path.join(cacheFolder, `${Date.now()}.mp4`);
+
                 const response = await axios.get(data.video_url, { responseType: "stream" });
                 const writer = fs.createWriteStream(tempFilePath);
                 response.data.pipe(writer);
@@ -43,11 +47,18 @@ module.exports.handleEvent = async function ({ api, event }) {
                 await api.sendMessage({
                     attachment: fs.createReadStream(tempFilePath),
                     body: "✅ Here's the video you requested:"
-                }, event.threadID);
+                }, event.threadID, async () => {
+                    // Auto delete after 30 seconds
+                    setTimeout(() => {
+                        fs.unlink(tempFilePath, (err) => {
+                            if (err) console.error("❌ Error deleting file:", err);
+                            else console.log(`🗑️ Deleted: ${tempFilePath}`);
+                        });
+                    }, 30000); // 30 seconds later
+                });
 
-                await fs.unlink(tempFilePath);
             } catch (error) {
-                console.error("Error downloading video:", error);
+                console.error("❌ Error downloading video:", error);
                 api.sendMessage("⚠️ Failed to download the video. Please try again later.", event.threadID, event.messageID);
             }
         }
