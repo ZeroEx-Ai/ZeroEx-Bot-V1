@@ -1,4 +1,4 @@
-const axios = require("axios");
+/*const axios = require("axios");
 const fs = require("fs-extra");
 const path = require("path");
 
@@ -68,3 +68,5 @@ module.exports.handleEvent = async function ({ api, event }) {
 module.exports.run = async function ({ api, event }) {
     return api.sendMessage("⚠️ This command does not support direct execution. Just send a video link.", event.threadID, event.messageID);
 };
+
+*/
