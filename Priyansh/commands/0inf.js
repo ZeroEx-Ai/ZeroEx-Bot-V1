@@ -4,7 +4,7 @@ module.exports.config = {
 	hasPermssion: 0,
 	credits: "Adi.0X",
 	description: "Admin and Bot info.",
-	commandCategory: "...",
+	commandCategory: "About",
 	cooldowns: 1,
 	dependencies: 
 	{
