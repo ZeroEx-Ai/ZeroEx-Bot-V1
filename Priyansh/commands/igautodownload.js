@@ -1,69 +1,59 @@
-const instagramGetUrl = require("instagram-url-downloader"); // Using a more reliable package
 const axios = require("axios");
 const fs = require("fs-extra");
-const tempy = require('tempy');
+const tempy = require("tempy");
 
 module.exports.config = {
-    name: "igautodownload",
+    name: "autovideodownloader",
     version: "1.0.0",
     hasPermssion: 0,
-    credits: "Priyansh Rajput",
-    description: "Downloads Instagram video from HD link provided",
+    credits: "CloudyVibes Dev",
+    description: "Automatically downloads videos from Facebook, Instagram, TikTok, and YouTube.",
     commandCategory: "utility",
-    usages: "[Instagram video URL]",
+    usages: "Send a video link",
     cooldowns: 5,
     dependencies: {
-        "instagram-url-downloader": "^0.0.3",
-        "axios": "0.21.1",
-        "fs-extra": "10.0.0",
-        "tempy": "0.4.0"
+        "axios": "latest",
+        "fs-extra": "latest",
+        "tempy": "latest"
     }
 };
 
-module.exports.handleEvent = async function({ api, event }) {
+module.exports.handleEvent = async function ({ api, event }) {
     if (event.type === "message" && event.body) {
-        const igRegex = /https?:\/\/(www\.)?instagram\.com\/(reel|p)\/[^\s]+/gi;
-        const urlMatch = event.body.match(igRegex);
-        
-        if (urlMatch) {
-            const url = urlMatch[0];
+        const videoUrl = event.body.trim();
+        if (videoUrl.match(/(facebook\.com|instagram\.com|tiktok\.com|youtube\.com|youtu\.be)/)) {
             try {
-                const result = await instagramGetUrl(url);
-                if (!result || !result.download) {
-                    throw new Error("No video found for the provided URL.");
+                const apiUrl = `https://nayan-video-downloader.vercel.app/alldown?url=${encodeURIComponent(videoUrl)}`;
+                const { data } = await axios.get(apiUrl, { headers: { "Content-Type": "application/json" } });
+
+                if (!data || !data.video_url) {
+                    throw new Error("Invalid response from API.");
                 }
 
-                const videoUrl = result.download;
-                const response = await axios({
-                    method: 'GET',
-                    url: videoUrl,
-                    responseType: 'stream'
-                });
-
-                const tempFilePath = tempy.file({ extension: 'mp4' });
+                const tempFilePath = tempy.file({ extension: "mp4" });
+                const response = await axios.get(data.video_url, { responseType: "stream" });
                 const writer = fs.createWriteStream(tempFilePath);
                 response.data.pipe(writer);
 
                 await new Promise((resolve, reject) => {
-                    writer.on('finish', resolve);
-                    writer.on('error', reject);
+                    writer.on("finish", resolve);
+                    writer.on("error", reject);
                 });
 
-                const attachment = fs.createReadStream(tempFilePath);
                 await api.sendMessage({
-                    attachment,
-                    body: "Here's your Instagram video:"
+                    attachment: fs.createReadStream(tempFilePath),
+                    body: "✅ Here's the video you requested:"
                 }, event.threadID);
 
-                fs.unlinkSync(tempFilePath);
+                await fs.unlink(tempFilePath);
             } catch (error) {
-                console.error('Error:', error);
-                api.sendMessage("❌ Unable to download the Instagram video. Please check the link and try again.", event.threadID);
+                console.error("Error downloading video:", error);
+                api.sendMessage("⚠️ Failed to download the video. Please try again later.", event.threadID, event.messageID);
             }
         }
     }
 };
 
-module.exports.run = function({ api, event }) {
-    api.sendMessage("🔗 Send any Instagram reel/post link to automatically download the video!", event.threadID);
+module.exports.run = async function ({ api, event }) {
+    return api.sendMessage("⚠️ This command does not support direct execution. Just send a video link.", event.threadID, event.messageID);
 };
