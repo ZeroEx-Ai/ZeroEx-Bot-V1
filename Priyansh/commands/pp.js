@@ -4,7 +4,7 @@ module.exports.config = {
   hasPermssion: 0,
   credits: "Adi.0X",
   description: "get pp id by people using it",
-  commandCategory: "Công cụ",
+  commandCategory: "Tools",
   cooldowns: 0
 };
 
