@@ -3,7 +3,7 @@ const axios = require("axios");
 module.exports.config = {
     name: "zteach",
     version: "1.0.0",
-    hasPermission: 0,
+    hasPermission: 2,
     credits: "ZeroEx",
     description: "Learn and teach responses to the bot",
     commandCategory: "Chat bot",
