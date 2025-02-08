@@ -4,7 +4,7 @@ module.exports.config = {
 	hasPermssion: 2,
 	credits: "Adi.0X",
 	description: "turn the bot off",
-	commandCategory: "system",
+	commandCategory: "System",
 	cooldowns: 0
         };
 module.exports.run = ({event, api}) =>{
