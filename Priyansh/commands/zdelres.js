@@ -1,7 +1,7 @@
 module.exports.config = {
     name: "zdelres",
     version: "1.0.0",
-    hasPermission: 0,
+    hasPermission: 2,
     credits: "ZeroEx",
     description: "Remove a specific response from an input in ZeroEx chat API",
     commandCategory: "Chat bot",
