@@ -2,14 +2,12 @@ const axios = require("axios");
 const fs = require("fs");
 const path = require("path");
 
-const spotifyCache = {};
-
 module.exports = {
   config: {
     name: "spotify",
     version: "1.0",
     hasPermssion: 0,
-    credits: "Your Name",
+    credits: "Adi.0X",
     description: "Search and download Spotify tracks",
     commandCategory: "music",
     usages: "[song name]",
@@ -21,6 +19,13 @@ module.exports = {
 
   run: async function({ api, event, args }) {
     const { threadID, messageID, senderID } = event;
+    const cacheDir = path.join(__dirname, "cache");
+    const cacheFile = path.join(cacheDir, `spotify_cache_${threadID}.json`);
+
+    // Create cache directory if not exists
+    if (!fs.existsSync(cacheDir)) {
+      fs.mkdirSync(cacheDir, { recursive: true });
+    }
 
     if (args.length === 0) {
       return api.sendMessage("🎵 Please enter a song name:", threadID, messageID);
@@ -28,7 +33,6 @@ module.exports = {
 
     try {
       const query = args.join(" ");
-      // Removed encodeURIComponent here
       const searchUrl = `https://nayan-video-downloader.vercel.app/spotify-search?name=${query}&limit=5`;
 
       api.setMessageReaction("🔍", messageID, () => {}, true);
@@ -45,11 +49,13 @@ module.exports = {
       });
       message += "\nReply with the number of the track you want to download.";
 
-      spotifyCache[threadID] = {
+      // Write cache to file
+      const cacheData = {
         senderID,
         results,
         timestamp: Date.now()
       };
+      fs.writeFileSync(cacheFile, JSON.stringify(cacheData));
 
       await api.sendMessage(message, threadID, (error, info) => {
         global.GoatBot.onReply.set(info.messageID, {
@@ -70,24 +76,27 @@ module.exports = {
 
   onReply: async function({ api, event, Reply, args }) {
     const { threadID, messageID, senderID, body } = event;
-    const cache = spotifyCache[threadID];
+    const cacheFile = path.join(__dirname, "cache", `spotify_cache_${threadID}.json`);
 
-    if (!cache || senderID !== cache.author) return;
+    if (!fs.existsSync(cacheFile)) return;
 
     try {
+      const cacheData = JSON.parse(fs.readFileSync(cacheFile));
+      if (senderID !== cacheData.senderID) return;
+
       const selectedNumber = parseInt(body);
       if (isNaN(selectedNumber) || selectedNumber < 1 || selectedNumber > 5) {
         return api.sendMessage("❌ Please reply with a valid number (1-5).", threadID, messageID);
       }
 
-      const track = cache.results[selectedNumber - 1];
+      const track = cacheData.results[selectedNumber - 1];
       const downloadUrl = `https://nayan-video-downloader.vercel.app/spotifyDl?url=${track.url}`;
 
       api.setMessageReaction("⏳", messageID, () => {}, true);
       const processingMsg = await api.sendMessage("⬇️ Downloading track... Please wait...", threadID, messageID);
 
       const response = await axios.get(downloadUrl, { responseType: "stream" });
-      const tempPath = path.join(__dirname, `cache/spotify_${Date.now()}.mp3`);
+      const tempPath = path.join(__dirname, "cache", `spotify_${Date.now()}.mp3`);
 
       const writer = fs.createWriteStream(tempPath);
       response.data.pipe(writer);
@@ -99,7 +108,11 @@ module.exports = {
         api.sendMessage({
           body: message,
           attachment: fs.createReadStream(tempPath)
-        }, threadID, () => fs.unlinkSync(tempPath), messageID);
+        }, threadID, () => {
+          // Cleanup files
+          fs.unlinkSync(tempPath);
+          fs.unlinkSync(cacheFile);
+        }, messageID);
         
         api.setMessageReaction("🎶", messageID, () => {}, true);
       });
@@ -108,8 +121,8 @@ module.exports = {
       console.error(error);
       api.sendMessage("❌ Failed to download the track.", threadID, messageID);
       api.setMessageReaction("❌", messageID, () => {}, true);
-    } finally {
-      delete spotifyCache[threadID];
+      // Cleanup cache file on error
+      if (fs.existsSync(cacheFile)) fs.unlinkSync(cacheFile);
     }
   }
 };
