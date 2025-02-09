@@ -4,7 +4,7 @@ module.exports.config = {
 	hasPermssion: 0,
 	credits: "Adi.0X",
 	description: "Screenshot of a website (NOT ALLOW Adult Sites)",
-	commandCategory: "other",
+	commandCategory: "Tools",
 	usages: "screenshot [site url]",
 	cooldowns: 5,
 	dependencies: {
