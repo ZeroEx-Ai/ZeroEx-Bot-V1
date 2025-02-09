@@ -1,48 +1,56 @@
 const fs = require("fs");
 const axios = require("axios");
 const jimp = require("jimp");
-const path = require("path");
-const os = require("os");
 
-module.exports = {
-  config: {
+module.exports.config = {
     name: "gpt",
-    version: "0.0.2",
+    version: "1.0",
     hasPermssion: 0,
-    credits: "Nayan",
-    description: "Chat with GPT",
-    commandCategory: "user",
-    usages: "",
+    credits: "Adi.0X (Modified from Nayan)",
+    description: "Chat with GPT or generate an image",
+    commandCategory: "AI",
+    usages: "[text]",
     cooldowns: 5,
-  },
+};
 
-  run: async function ({ api, events, args }) {
+module.exports.run = async function ({ api, event, args }) {
     try {
-      const prompt = args.join(" ");
-      const { data } = await axios.post("https://nayan-gpt4.onrender.com/gpt4", { prompt });
+        if (args.length === 0) {
+            return api.sendMessage("⚠️ Please enter a prompt!", event.threadID, event.messageID);
+        }
 
-      if (data.data.imgUrl) {
-        const imgUrl = data.data.imgUrl;
-        const response = await axios.get(imgUrl, { responseType: "arraybuffer" });
-        const image = await jimp.read(response.data);
+        const prompt = args.join(" ");
+        api.sendMessage("⏳ Processing your request...", event.threadID, event.messageID);
 
-        const outputPath = path.join(os.tmpdir(), "dalle3.png");
-        await image.writeAsync(outputPath);
+        // GPT API Request
+        const { data } = await axios.post("https://nayan-gpt4.onrender.com/gpt4", { prompt });
 
-        const attachment = fs.createReadStream(outputPath);
-        await api.sendMessage(
-          { body: `🖼️ Here is your generated image: "${prompt}"`, attachment },
-          events.threadID,
-          events.messageID
-        );
+        if (!data.data.response) {
+            // Image Processing
+            const imgUrl = data.data.imgUrl;
+            const response = await axios.get(imgUrl, { responseType: "arraybuffer" });
+            const image = await jimp.read(response.data);
+            const outputPath = "./dalle3.png";
 
-        if (fs.existsSync(outputPath)) fs.unlinkSync(outputPath);
-      } else {
-        api.sendMessage(data.data.response || "No response received.", events.threadID, events.messageID);
-      }
+            await image.writeAsync(outputPath);
+            const attachment = fs.createReadStream(outputPath);
+
+            await api.sendMessage(
+                {
+                    body: `🖼️ Here is your generated image: "${prompt}"`,
+                    attachment,
+                },
+                event.threadID,
+                event.messageID
+            );
+
+            fs.unlinkSync(outputPath);
+        } else {
+            // Text Response
+            api.sendMessage(data.data.response, event.threadID, event.messageID);
+        }
     } catch (error) {
-      console.error("Error:", error);
-      api.sendMessage("An error occurred while processing your request.", events.threadID, events.messageID);
+        console.error("Error:", error);
+        api.sendMessage("❌ An error occurred while processing your request.", event.threadID, event.messageID);
     }
-  },
 };
