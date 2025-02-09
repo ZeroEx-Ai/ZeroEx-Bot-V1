@@ -1,116 +1,79 @@
-const axios = require("axios");
-const fs = require("fs");
-const path = require("path");
-const https = require("https");
+const axios = require('axios');
 
 module.exports = {
   config: {
-    name: "spotify",
-    version: "1.0.0",
-    hasPermission: 0,
-    credits: "Adi.0X",
-    description: "Search and download songs from Spotify",
-    commandCategory: "Media",
-    usages: "[song name]",
+    name: 'spotify',
+    version: '1.0.0',
+    hasPermssion: 0,
+    credits: 'Developer Name',
+    description: 'Search for Spotify songs and download them',
+    commandCategory: 'Media',
+    usages: '[songName]',
     cooldowns: 5,
+    dependencies: {
+      'axios': '',
+    },
   },
 
   run: async function ({ api, event, args }) {
-    if (!args.length) {
-      return api.sendMessage(
-        "❌ Please provide a song name. Example: /spotify Ghum",
-        event.threadID,
-        event.messageID
-      );
-    }
+    let songName = args.join(' ');
 
-    const songName = args.join(" ");
-    const searchUrl = `https://nayan-video-downloader.vercel.app/spotify-search?name=${encodeURIComponent(songName)}&limit=5`;
+    if (!songName) {
+      return api.sendMessage('❓ Please provide a song name to search on Spotify.', event.threadID, event.messageID);
+    }
 
     try {
-      const response = await axios.get(searchUrl);
-      if (!response.data || !response.data.results.length) {
-        return api.sendMessage("❌ No songs found!", event.threadID, event.messageID);
+      const searchUrl = `https://nayan-video-downloader.vercel.app/spotify-search?name=${songName}&limit=5`;
+      const searchResponse = await axios.get(searchUrl);
+      const results = searchResponse.data.results;
+
+      if (!results || results.length === 0) {
+        return api.sendMessage('🚫 No songs found. Please try a different search.', event.threadID, event.messageID);
       }
 
-      let message = "🎵 **Select a song by replying with its number:**\n\n";
-      response.data.results.forEach((song) => {
-        message += `${song.index}. ${song.name} - ${song.artists}\n`;
+      let resultMessage = '🔍 Here are 5 songs found:\n';
+      results.forEach((song, index) => {
+        resultMessage += `\n${index + 1}. ${song.name} - ${song.artists}`;
       });
 
-      api.sendMessage(message, event.threadID, (err, info) => {
-        if (err) return console.error(err);
+      resultMessage += '\n\nReply with the number of the song you want to download (e.g., 1, 2, 3...)';
 
-        global.client.handleReply.push({
-          type: "spotify-select",
-          name: this.config.name,
-          messageID: info.messageID,
-          results: response.data.results,
-          author: event.senderID,
-        });
+      api.sendMessage(resultMessage, event.threadID, (messageInfo) => {
+        const replyListener = async (eventReply) => {
+          const songNumber = parseInt(eventReply.body);
+          if (songNumber >= 1 && songNumber <= 5) {
+            const selectedSong = results[songNumber - 1];
+            const downloadUrl = `https://nayan-video-downloader.vercel.app/spotifyDl?url=${selectedSong.link}`;
+
+            try {
+              const downloadResponse = await axios.get(downloadUrl);
+              const audioUrl = downloadResponse.data.download_url;
+
+              if (audioUrl) {
+                api.sendMessage(
+                  {
+                    attachment: audioUrl,
+                    body: `🎶 Here is your song: ${selectedSong.name}`,
+                  },
+                  event.threadID
+                );
+              } else {
+                api.sendMessage('❌ Failed to fetch the audio file. Please try again later.', event.threadID);
+              }
+            } catch (error) {
+              console.error('Error fetching the audio file:', error);
+              api.sendMessage('❌ Error occurred while downloading the audio file. Please try again later.', event.threadID);
+            }
+          } else {
+            api.sendMessage('🚫 Invalid song number! Please reply with a valid number from the list.', event.threadID, messageInfo.messageID);
+          }
+        };
+
+        api.listenMutes(event.threadID, replyListener);
       });
     } catch (error) {
-      console.error(error);
-      api.sendMessage("❌ Failed to fetch songs!", event.threadID, event.messageID);
-    }
-  },
-
-  handleReply: async function ({ api, event, handleReply }) {
-    if (handleReply.type === "spotify-select" && event.senderID === handleReply.author) {
-      const selectedIndex = parseInt(event.body);
-      const selectedSong = handleReply.results.find((song) => song.index === selectedIndex);
-
-      if (!selectedSong) {
-        return api.sendMessage("❌ Invalid selection!", event.threadID, event.messageID);
-      }
-
-      api.sendMessage(`⏳ Downloading: ${selectedSong.name} - ${selectedSong.artists}`, event.threadID);
-
-      const downloadUrl = `https://nayan-video-downloader.vercel.app/spotifyDl?url=${encodeURIComponent(selectedSong.link)}`;
-
-      try {
-        const downloadResponse = await axios.get(downloadUrl);
-        if (!downloadResponse.data || !downloadResponse.data.downloadUrl) {
-          return api.sendMessage("❌ Download failed!", event.threadID, event.messageID);
-        }
-
-        const fileUrl = downloadResponse.data.downloadUrl;
-        const filename = `${selectedSong.name.replace(/[^a-zA-Z0-9 \-_]/g, "")}.mp3`;
-        const filePath = path.join(__dirname, "cache", filename);
-
-        if (!fs.existsSync(path.join(__dirname, "cache"))) {
-          fs.mkdirSync(path.join(__dirname, "cache"), { recursive: true });
-        }
-
-        const file = fs.createWriteStream(filePath);
-        await new Promise((resolve, reject) => {
-          https.get(fileUrl, (response) => {
-            if (response.statusCode === 200) {
-              response.pipe(file);
-              file.on("finish", () => {
-                file.close(resolve);
-              });
-            } else {
-              reject(new Error(`Download failed. Status code: ${response.statusCode}`));
-            }
-          }).on("error", (error) => {
-            fs.unlinkSync(filePath);
-            reject(error);
-          });
-        });
-
-        await api.sendMessage(
-          {
-            attachment: fs.createReadStream(filePath),
-            body: `🎶 Here is your song:\n**${selectedSong.name}** - ${selectedSong.artists}`,
-          },
-          event.threadID,
-          () => fs.unlinkSync(filePath)
-        );
-      } catch (error) {
-        console.error(error);
-        api.sendMessage("❌ Failed to download song!", event.threadID, event.messageID);
-      }
+      console.error(`Error in Spotify command: ${error.message}`);
+      return api.sendMessage('🚫 There was an error while searching for the song. Please try again later.', event.threadID, event.messageID);
     }
   },
 };
