@@ -5,16 +5,14 @@ const path = require("path");
 module.exports = {
   config: {
     name: "spotify",
-    version: "1.0",
+    version: "1.1",
     hasPermssion: 0,
-    credits: "Adi.0X",
+    credits: "Your Name",
     description: "Search and download Spotify tracks",
     commandCategory: "music",
     usages: "[song name]",
     cooldowns: 5,
-    dependencies: {
-      "axios": ""
-    }
+    dependencies: { "axios": "" }
   },
 
   run: async function({ api, event, args }) {
@@ -22,10 +20,7 @@ module.exports = {
     const cacheDir = path.join(__dirname, "cache");
     const cacheFile = path.join(cacheDir, `spotify_cache_${threadID}.json`);
 
-    // Create cache directory if not exists
-    if (!fs.existsSync(cacheDir)) {
-      fs.mkdirSync(cacheDir, { recursive: true });
-    }
+    if (!fs.existsSync(cacheDir)) fs.mkdirSync(cacheDir, { recursive: true });
 
     if (args.length === 0) {
       return api.sendMessage("🎵 Please enter a song name:", threadID, messageID);
@@ -33,23 +28,27 @@ module.exports = {
 
     try {
       const query = args.join(" ");
-      const searchUrl = `https://nayan-video-downloader.vercel.app/spotify-search?name=${query}&limit=5`;
+      const searchUrl = `https://nayan-video-downloader.vercel.app/spotify-search?name=${query.replace(/ /g, "+")}&limit=5`;
 
       api.setMessageReaction("🔍", messageID, () => {}, true);
-      const response = await axios.get(searchUrl);
-      const results = response.data.data;
+      
+      // Added timeout and better error handling
+      const response = await axios.get(searchUrl, { timeout: 10000 });
+      
+      console.log("API Response:", response.data); // Debug log
 
-      if (!results || results.length === 0) {
+      if (!response.data || !response.data.data || !response.data.data.length) {
         return api.sendMessage("❌ No results found for your search.", threadID, messageID);
       }
 
+      const results = response.data.data;
       let message = "🎧 Spotify Search Results:\n\n";
       results.forEach((item, index) => {
         message += `${index + 1}. ${item.name} - ${item.artists[0].name} (${item.album.release_date.split('-')[0]})\n`;
       });
-      message += "\nReply with the number of the track you want to download.";
+      message += "\nReply with the number (1-5) to download";
 
-      // Write cache to file
+      // Write cache with expiration (5 minutes)
       const cacheData = {
         senderID,
         results,
@@ -68,8 +67,8 @@ module.exports = {
       api.setMessageReaction("✅", messageID, () => {}, true);
 
     } catch (error) {
-      console.error(error);
-      api.sendMessage("❌ An error occurred while searching.", threadID, messageID);
+      console.error("Search Error:", error);
+      api.sendMessage(`❌ Error: ${error.message}`, threadID, messageID);
       api.setMessageReaction("❌", messageID, () => {}, true);
     }
   },
@@ -90,38 +89,43 @@ module.exports = {
       }
 
       const track = cacheData.results[selectedNumber - 1];
-      const downloadUrl = `https://nayan-video-downloader.vercel.app/spotifyDl?url=${track.url}`;
+      const downloadUrl = `https://nayan-video-downloader.vercel.app/spotifyDl?url=${encodeURIComponent(track.url)}`;
 
       api.setMessageReaction("⏳", messageID, () => {}, true);
-      const processingMsg = await api.sendMessage("⬇️ Downloading track... Please wait...", threadID, messageID);
+      const processingMsg = await api.sendMessage("⬇️ Downloading track... (This may take 20-30 seconds)", threadID, messageID);
 
-      const response = await axios.get(downloadUrl, { responseType: "stream" });
+      // Added timeout and better download handling
+      const response = await axios.get(downloadUrl, {
+        responseType: "stream",
+        timeout: 30000
+      });
+
       const tempPath = path.join(__dirname, "cache", `spotify_${Date.now()}.mp3`);
-
       const writer = fs.createWriteStream(tempPath);
       response.data.pipe(writer);
 
       writer.on("finish", async () => {
-        const message = `🎵 Now Playing:\n\n${track.name}\nArtist: ${track.artists[0].name}\nReleased: ${track.album.release_date.split('-')[0]}`;
-        
         api.unsendMessage(processingMsg.messageID);
         api.sendMessage({
-          body: message,
+          body: `🎵 Now Playing:\n${track.name}\nArtist: ${track.artists[0].name}\nReleased: ${track.album.release_date.split('-')[0]}`,
           attachment: fs.createReadStream(tempPath)
         }, threadID, () => {
-          // Cleanup files
           fs.unlinkSync(tempPath);
           fs.unlinkSync(cacheFile);
         }, messageID);
-        
         api.setMessageReaction("🎶", messageID, () => {}, true);
       });
 
+      writer.on("error", (err) => {
+        console.error("Download Error:", err);
+        api.sendMessage("❌ Failed to save the audio file", threadID, messageID);
+        fs.unlinkSync(tempPath);
+      });
+
     } catch (error) {
-      console.error(error);
-      api.sendMessage("❌ Failed to download the track.", threadID, messageID);
+      console.error("Download Error:", error);
+      api.sendMessage(`❌ Download failed: ${error.message}`, threadID, messageID);
       api.setMessageReaction("❌", messageID, () => {}, true);
-      // Cleanup cache file on error
       if (fs.existsSync(cacheFile)) fs.unlinkSync(cacheFile);
     }
   }
