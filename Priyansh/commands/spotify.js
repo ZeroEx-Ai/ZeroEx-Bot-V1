@@ -1,21 +1,22 @@
 const axios = require('axios');
-const userStates = new Map();
 
 module.exports = {
   config: {
     name: 'spotify',
-    version: '1.0.1',
+    version: '1.0.0',
     hasPermssion: 0,
-    credits: 'Your Name',
-    description: 'Search and download Spotify songs',
+    credits: 'Developer Name',
+    description: 'Search for Spotify songs and download them',
     commandCategory: 'Media',
     usages: '[songName]',
     cooldowns: 5,
-    dependencies: { 'axios': '' },
+    dependencies: {
+      'axios': '',
+    },
   },
 
   run: async function ({ api, event, args }) {
-    const songName = args.join(' ');
+    let songName = args.join(' ');
 
     if (!songName) {
       return api.sendMessage('❓ Please provide a song name to search on Spotify.', event.threadID, event.messageID);
@@ -34,47 +35,45 @@ module.exports = {
       results.forEach((song, index) => {
         resultMessage += `\n${index + 1}. ${song.name} - ${song.artists}`;
       });
-      resultMessage += '\n\nReply with the **number** of the song you want to download (1-5).';
 
-      await api.sendMessage(resultMessage, event.threadID);
-      userStates.set(`${event.threadID}_${event.senderID}`, results);
+      resultMessage += '\n\nReply with the number of the song you want to download (e.g., 1, 2, 3...)';
 
+      api.sendMessage(resultMessage, event.threadID, (messageInfo) => {
+        const replyListener = async (eventReply) => {
+          const songNumber = parseInt(eventReply.body);
+          if (songNumber >= 1 && songNumber <= 5) {
+            const selectedSong = results[songNumber - 1];
+            const downloadUrl = `https://nayan-video-downloader.vercel.app/spotifyDl?url=${encodeURIComponent(selectedSong.link)}`;
+
+            try {
+              const downloadResponse = await axios.get(downloadUrl);
+              const audioUrl = downloadResponse.data.download_url;
+
+              if (audioUrl) {
+                api.sendMessage(
+                  {
+                    attachment: audioUrl,
+                    body: `🎶 Here is your song: ${selectedSong.name}`,
+                  },
+                  event.threadID
+                );
+              } else {
+                api.sendMessage('❌ Failed to fetch the audio file. Please try again later.', event.threadID);
+              }
+            } catch (error) {
+              console.error('Error fetching the audio file:', error);
+              api.sendMessage('❌ Error occurred while downloading the audio file. Please try again later.', event.threadID);
+            }
+          } else {
+            api.sendMessage('🚫 Invalid song number! Please reply with a valid number from the list.', event.threadID, messageInfo.messageID);
+          }
+        };
+
+        api.listenMutes(event.threadID, replyListener);
+      });
     } catch (error) {
-      console.error('Error searching:', error);
-      api.sendMessage('🚫 Error occurred while searching. Please try again later.', event.threadID, event.messageID);
+      console.error(`Error in Spotify command: ${error.message}`);
+      return api.sendMessage('🚫 There was an error while searching for the song. Please try again later.', event.threadID, event.messageID);
     }
   },
-
-  handleEvent: async function ({ api, event }) {
-    const key = `${event.threadID}_${event.senderID}`;
-    const results = userStates.get(key);
-
-    if (!results || event.type !== 'message' || event.body === undefined) return;
-
-    const songNumber = parseInt(event.body.trim());
-    if (isNaN(songNumber) || songNumber < 1 || songNumber > 5) return;
-
-    userStates.delete(key); // Clear the state immediately
-
-    try {
-      api.sendMessage('⏳ Downloading your song, please wait...', event.threadID);
-
-      const selectedSong = results[songNumber - 1];
-      const downloadUrl = `https://nayan-video-downloader.vercel.app/spotifyDl?url=${encodeURIComponent(selectedSong.link)}`;
-      const downloadResponse = await axios.get(downloadUrl);
-      const audioUrl = downloadResponse.data.download_url;
-
-      if (!audioUrl) throw new Error('No download URL found');
-
-      const audioStream = await axios.get(audioUrl, { responseType: 'stream' });
-      await api.sendMessage({
-        attachment: audioStream.data,
-        body: `🎶 Here is your song: ${selectedSong.name}`
-      }, event.threadID);
-
-    } catch (error) {
-      console.error('Download error:', error);
-      api.sendMessage('❌ Failed to download the song. Please try again later.', event.threadID);
-    }
-  }
 };
