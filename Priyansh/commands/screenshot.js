@@ -2,10 +2,10 @@ module.exports.config = {
 	name: "screenshot",
 	version: "1.0.0",
 	hasPermssion: 0,
-	credits: "𝐏𝐫𝐢𝐲𝐚𝐧𝐬𝐡 𝐑𝐚𝐣𝐩𝐮𝐭",
-	description: "Screenshot một trang web nào đó (NOT ALLOW NSFW PAGE)",
+	credits: "Adi.0X",
+	description: "Screenshot of a website (NOT ALLOW Adult Sites)",
 	commandCategory: "other",
-	usages: "[url site]",
+	usages: "screenshot [site url]",
 	cooldowns: 5,
 	dependencies: {
         "fs-extra": "",
@@ -31,7 +31,7 @@ module.exports.run = async ({ event, api, args, }) => {
     if (!global.moduleData.pornList) global.moduleData.pornList = readFileSync(__dirname + "/cache/pornlist.txt", "utf-8").split('\n').filter(site => site && !site.startsWith('#')).map(site => site.replace(/^(0.0.0.0 )/, ''));
     const urlParsed = url.parse(args[0]);
 
-    if (global.moduleData.pornList.some(pornURL => urlParsed.host == pornURL)) return api.sendMessage("The site you entered is not secure!!(NSFW PAGE)", event.threadID, event.messageID);
+    if (global.moduleData.pornList.some(pornURL => urlParsed.host == pornURL)) return api.sendMessage("The site you entered is not secure!!(Adult Site)", event.threadID, event.messageID);
 
     try {
         const path = __dirname + `/cache/${event.threadID}-${event.senderID}s.png`;
