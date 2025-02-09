@@ -38,11 +38,14 @@ module.exports = {
 
       resultMessage += '\n\nReply with the **number** of the song you want to download (1-5).';
 
-      api.sendMessage(resultMessage, event.threadID, (err, messageInfo) => {
+      // Send message with song list
+      api.sendMessage(resultMessage, event.threadID, async (err, messageInfo) => {
         if (err) return console.error(err);
 
-        const listener = api.listenMqtt(async (reply) => {
+        // Start listening for a reply
+        const listener = async (reply) => {
           if (reply.senderID !== event.senderID || reply.threadID !== event.threadID) return;
+
           const songNumber = parseInt(reply.body.trim());
 
           if (!songNumber || songNumber < 1 || songNumber > 5) {
@@ -50,7 +53,7 @@ module.exports = {
           }
 
           api.sendMessage('⏳ Downloading your song, please wait...', event.threadID);
-          api.removeListener(listener); // Remove listener after getting reply
+          api.removeListener('message', listener); // Stop listening once a valid reply is received
 
           const selectedSong = results[songNumber - 1];
           const downloadUrl = `https://nayan-video-downloader.vercel.app/spotifyDl?url=${selectedSong.link}`;
@@ -74,7 +77,10 @@ module.exports = {
             console.error('Error fetching the audio file:', error);
             api.sendMessage('❌ Error occurred while downloading the audio file. Please try again later.', event.threadID);
           }
-        });
+        };
+
+        // Listen for a reply from the user
+        api.listenMqtt(listener);
       });
     } catch (error) {
       console.error(`Error in Spotify command: ${error.message}`);
