@@ -2,7 +2,6 @@ const axios = require("axios");
 const fs = require("fs");
 const path = require("path");
 
-// Temporary cache to store search results
 const spotifyCache = {};
 
 module.exports = {
@@ -29,7 +28,8 @@ module.exports = {
 
     try {
       const query = args.join(" ");
-      const searchUrl = `https://nayan-video-downloader.vercel.app/spotify-search?name=${encodeURIComponent(query)}&limit=5`;
+      // Removed encodeURIComponent here
+      const searchUrl = `https://nayan-video-downloader.vercel.app/spotify-search?name=${query}&limit=5`;
 
       api.setMessageReaction("🔍", messageID, () => {}, true);
       const response = await axios.get(searchUrl);
@@ -45,7 +45,6 @@ module.exports = {
       });
       message += "\nReply with the number of the track you want to download.";
 
-      // Store results in cache
       spotifyCache[threadID] = {
         senderID,
         results,
@@ -85,7 +84,7 @@ module.exports = {
       const downloadUrl = `https://nayan-video-downloader.vercel.app/spotifyDl?url=${track.url}`;
 
       api.setMessageReaction("⏳", messageID, () => {}, true);
-      api.sendMessage("⬇️ Downloading track... Please wait...", threadID, messageID);
+      const processingMsg = await api.sendMessage("⬇️ Downloading track... Please wait...", threadID, messageID);
 
       const response = await axios.get(downloadUrl, { responseType: "stream" });
       const tempPath = path.join(__dirname, `cache/spotify_${Date.now()}.mp3`);
@@ -96,16 +95,11 @@ module.exports = {
       writer.on("finish", async () => {
         const message = `🎵 Now Playing:\n\n${track.name}\nArtist: ${track.artists[0].name}\nReleased: ${track.album.release_date.split('-')[0]}`;
         
+        api.unsendMessage(processingMsg.messageID);
         api.sendMessage({
           body: message,
           attachment: fs.createReadStream(tempPath)
-        }, threadID, () => {
-          fs.unlinkSync(tempPath);
-          // Unsend the original list message
-          if (Reply.messageID) {
-            api.unsendMessage(Reply.messageID);
-          }
-        }, messageID);
+        }, threadID, () => fs.unlinkSync(tempPath), messageID);
         
         api.setMessageReaction("🎶", messageID, () => {}, true);
       });
@@ -115,7 +109,6 @@ module.exports = {
       api.sendMessage("❌ Failed to download the track.", threadID, messageID);
       api.setMessageReaction("❌", messageID, () => {}, true);
     } finally {
-      // Clear cache after processing
       delete spotifyCache[threadID];
     }
   }
