@@ -4,9 +4,9 @@ const path = require('path');
 
 module.exports.config = {
     name: "spotify",
-    version: "1.4.0",
+    version: "1.5.0",
     hasPermssion: 0,
-    credits: "Your Name",
+    credits: "Adi.0X",
     description: "Search and download Spotify tracks",
     commandCategory: "music",
     usages: "/spotify [song name]",
@@ -93,25 +93,33 @@ module.exports.handleEvent = async ({ api, event }) => {
         writer.on('finish', () => {
             console.log(`✅ Download complete: ${filePath}`);
 
-            api.sendMessage({ 
-                body: `🎶 Now playing: ${track.name}\n👤 Artist: ${track.artists}`, 
-                attachment: fs.createReadStream(filePath) 
-            }, threadID, (err) => {
-                if (!err) {
-                    console.log(`📤 Sent: ${filePath}`);
-                    setTimeout(() => {
-                        fs.unlink(filePath, (unlinkErr) => {
-                            if (!unlinkErr) {
-                                console.log(`🗑️ Deleted file after delay: ${filePath}`);
-                            }
-                        });
-                    }, 5000); // Delay delete by 5 seconds
-                } else {
-                    console.error("❌ Error sending file:", err);
+            // Ensure the file exists before sending
+            fs.access(filePath, fs.constants.F_OK, (err) => {
+                if (err) {
+                    console.error("❌ File not found:", filePath);
+                    return api.sendMessage("⚠️ Error: File not found. Try again later.", threadID, messageID);
                 }
-            });
 
-            delete searchResults[threadID]; // Clear stored data
+                api.sendMessage({ 
+                    body: `🎶 Now playing: ${track.name}\n👤 Artist: ${track.artists}`, 
+                    attachment: fs.createReadStream(filePath) 
+                }, threadID, (sendErr) => {
+                    if (!sendErr) {
+                        console.log(`📤 Sent: ${filePath}`);
+                        setTimeout(() => {
+                            fs.unlink(filePath, (unlinkErr) => {
+                                if (!unlinkErr) {
+                                    console.log(`🗑️ Deleted file after delay: ${filePath}`);
+                                }
+                            });
+                        }, 5000); // Delay delete by 5 seconds
+                    } else {
+                        console.error("❌ Error sending file:", sendErr);
+                    }
+                });
+
+                delete searchResults[threadID]; // Clear stored data
+            });
         });
 
         writer.on('error', (err) => {
