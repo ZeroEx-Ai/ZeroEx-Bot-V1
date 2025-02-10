@@ -1,48 +1,74 @@
-const axios = require("axios");
-
-const searchAPI = "https://nayan-video-downloader.vercel.app/spotify-search?name=";
+const axios = require('axios');
 
 module.exports = {
   config: {
-    name: "Spotify",
-    version: "1.0.0",
-    hasPermission: 0,
-    credits: "ZeroEx-0X",
-    description: "Search for songs on Spotify",
-    commandCategory: "Music",
-    usages: "/Spotify [song name]",
-    cooldowns: 5
+    name: 'spotify',
+    version: '1.0.0',
+    hasPermssion: 0,
+    credits: 'Developer Name',
+    description: 'Search for Spotify songs and download them',
+    commandCategory: 'Media',
+    usages: '[songName]',
+    cooldowns: 5,
+    dependencies: {
+      'axios': '',
+    },
   },
 
   run: async function ({ api, event, args }) {
-    const { threadID, messageID } = event;
+    let songName = args.join(' ');
 
-    if (args.length === 0) {
-      return api.sendMessage("🎵 Please enter a song name:", threadID, messageID);
+    if (!songName) {
+      // If no song name is provided, ask for the song name
+      return api.sendMessage('❓ Please provide a song name to search on Spotify.', event.threadID, event.messageID);
     }
 
-    const songName = args.join(" ");
-    const processingMsg = await api.sendMessage(`🔍 Searching for "${songName}"...`, threadID, messageID);
-
+    // Perform Spotify search
     try {
-      const searchRes = await axios.get(`${searchAPI}${encodeURIComponent(songName)}&limit=5`);
-      console.log("🔍 API Response:", searchRes.data);
+      const searchUrl = `https://nayan-video-downloader.vercel.app/spotify-search?name=${encodeURIComponent(songName)}&limit=5`;
+      const searchResponse = await axios.get(searchUrl);
 
-      const songs = searchRes.data.results;
-      if (!songs || songs.length === 0) {
-        return api.sendMessage("❌ No songs found. Try another name.", threadID, messageID);
+      // Log the API response to check the data structure
+      console.log("Search Response:", searchResponse.data);
+
+      const results = searchResponse.data.results;
+
+      if (!results || results.length === 0) {
+        return api.sendMessage('🚫 No songs found. Please try a different search.', event.threadID, event.messageID);
       }
 
-      let response = "🔍 Here are 5 songs found:\n\n";
-      songs.forEach((song, index) => {
-        response += `${index + 1}. ${song.title} - ${song.artist} (${song.year || "Unknown"})\n`;
+      // Send the list of results to the user
+      let resultMessage = '🔍 Here are 5 songs found:\n';
+      results.forEach((song, index) => {
+        // Logging individual song data to check field names
+        console.log(`Song ${index + 1}:`, song);
+        
+        // Ensure the correct field names are being used for song name and artist
+        resultMessage += `\n${index + 1}. ${song.name || "Unknown Song"} - ${song.artists || "Unknown Artist"}`;
       });
 
-      return api.sendMessage(response, threadID, messageID);
+      resultMessage += '\n\nReply with the number of the song you want to download (e.g., 1, 2, 3...)';
 
+      return api.sendMessage(resultMessage, event.threadID, async (messageInfo) => {
+        // Wait for the user to reply with a song number
+        const userReply = (eventReply) => {
+          const songNumber = parseInt(eventReply.body);
+          if (songNumber >= 1 && songNumber <= 5) {
+            const selectedSong = results[songNumber - 1];
+            const downloadUrl = `https://nayan-video-downloader.vercel.app/spotifyDl?url=${encodeURIComponent(selectedSong.link)}`;
+
+            // Get the download link and send it
+            api.sendMessage(`🎶 Song: ${selectedSong.name} by ${selectedSong.artists}\nDownload: ${downloadUrl}`, event.threadID);
+          } else {
+            api.sendMessage('🚫 Invalid song number! Please reply with a valid number from the list.', event.threadID, messageInfo.messageID);
+          }
+        };
+
+        api.listenMutes(event.threadID, userReply);
+      });
     } catch (error) {
-      console.error("❌ Spotify Search API Error:", error.message);
-      return api.sendMessage("⚠️ Error searching for the song. Try again later.", threadID, messageID);
+      console.error(`Error in Spotify command: ${error.message}`);
+      return api.sendMessage('🚫 There was an error while searching for the song. Please try again later.', event.threadID, event.messageID);
     }
-  }
+  },
 };
