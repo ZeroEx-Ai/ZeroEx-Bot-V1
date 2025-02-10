@@ -6,10 +6,13 @@ const https = require("https");
 const searchAPI = "https://nayan-video-downloader.vercel.app/spotify-search?name=";
 const downloadAPI = "https://nayan-video-downloader.vercel.app/spotifyDl?url=";
 
+// Store user-selected songs temporarily
+const userSelections = {};
+
 module.exports = {
   config: {
     name: "Spotify",
-    version: "1.0.0",
+    version: "1.1.0",
     hasPermission: 0,
     credits: "ZeroEx-0X",
     description: "Search and download Spotify songs",
@@ -20,9 +23,6 @@ module.exports = {
 
   run: async function ({ api, event, args }) {
     const { threadID, messageID, senderID } = event;
-
-    // Store user-selected songs temporarily
-    global.spotifySelections = global.spotifySelections || {};
 
     // If no song name is provided, ask for one
     if (args.length === 0) {
@@ -38,7 +38,7 @@ module.exports = {
     try {
       // Search for songs
       const searchRes = await axios.get(`${searchAPI}${encodeURIComponent(songName)}&limit=5`);
-      const songs = searchRes.data;
+      const songs = searchRes.data.results; // Corrected path
 
       // Check if results exist
       if (!songs || songs.length === 0) {
@@ -46,18 +46,20 @@ module.exports = {
       }
 
       // Store search results for the user
-      global.spotifySelections[senderID] = songs;
+      userSelections[senderID] = songs;
 
       // Create response message with song list
       let response = "🔍 Here are 5 songs found:\n\n";
       songs.forEach((song, index) => {
-        response += `${index + 1}. ${song.title} - ${song.artist}\n`;
+        response += `${index + 1}. ${song.title} - ${song.artist} (${song.year || "Unknown"})\n`;
       });
       response += "\nReply with the number of the song you want (e.g., 1, 2, 3...)";
 
-      // Send song list
-      return api.sendMessage(response, threadID, messageID);
-      
+      // Send song list & enable reply handling
+      return api.sendMessage(response, threadID, (err, info) => {
+        userSelections[`${senderID}_messageID`] = info.messageID; // Save message ID for reference
+      });
+
     } catch (error) {
       console.error("Spotify Search Error:", error.message);
       return api.sendMessage("⚠️ Error searching for the song. Please try again later.", threadID, messageID);
@@ -66,13 +68,13 @@ module.exports = {
 
   handleReply: async function ({ api, event }) {
     const { threadID, messageID, senderID, body } = event;
-    
+
     // Ensure there are stored selections for this user
-    if (!global.spotifySelections[senderID]) {
+    if (!userSelections[senderID]) {
       return api.sendMessage("❌ No song selection found. Please start again using /Spotify [song name].", threadID, messageID);
     }
 
-    const songs = global.spotifySelections[senderID];
+    const songs = userSelections[senderID];
 
     // Check if the user replied with a valid number
     const songIndex = parseInt(body.trim());
@@ -139,6 +141,9 @@ module.exports = {
         },
         messageID
       );
+
+      // Remove user selection after download
+      delete userSelections[senderID];
 
     } catch (error) {
       console.error("Spotify Download Error:", error.message);
