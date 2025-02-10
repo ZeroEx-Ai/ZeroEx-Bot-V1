@@ -1,132 +1,148 @@
 const axios = require("axios");
 const fs = require("fs");
 const path = require("path");
+const https = require("https");
+
+const searchAPI = "https://nayan-video-downloader.vercel.app/spotify-search?name=";
+const downloadAPI = "https://nayan-video-downloader.vercel.app/spotifyDl?url=";
 
 module.exports = {
   config: {
-    name: "spotify",
-    version: "1.1",
-    hasPermssion: 0,
-    credits: "Your Name",
-    description: "Search and download Spotify tracks",
-    commandCategory: "music",
-    usages: "[song name]",
-    cooldowns: 5,
-    dependencies: { "axios": "" }
+    name: "Spotify",
+    version: "1.0.0",
+    hasPermission: 0,
+    credits: "ZeroEx-0X",
+    description: "Search and download Spotify songs",
+    commandCategory: "Music",
+    usages: "/Spotify [song name]",
+    cooldowns: 5
   },
 
-  run: async function({ api, event, args }) {
+  run: async function ({ api, event, args }) {
     const { threadID, messageID, senderID } = event;
-    const cacheDir = path.join(__dirname, "cache");
-    const cacheFile = path.join(cacheDir, `spotify_cache_${threadID}.json`);
 
-    if (!fs.existsSync(cacheDir)) fs.mkdirSync(cacheDir, { recursive: true });
+    // Store user-selected songs temporarily
+    global.spotifySelections = global.spotifySelections || {};
 
+    // If no song name is provided, ask for one
     if (args.length === 0) {
       return api.sendMessage("🎵 Please enter a song name:", threadID, messageID);
     }
 
+    // Get the song name from user input
+    const songName = args.join(" ");
+
+    // Send processing message
+    const processingMsg = await api.sendMessage(`🔍 Searching for "${songName}"...`, threadID, messageID);
+
     try {
-      const query = args.join(" ");
-      const searchUrl = `https://nayan-video-downloader.vercel.app/spotify-search?name=${query.replace(/ /g, "+")}&limit=5`;
+      // Search for songs
+      const searchRes = await axios.get(`${searchAPI}${encodeURIComponent(songName)}&limit=5`);
+      const songs = searchRes.data;
 
-      api.setMessageReaction("🔍", messageID, () => {}, true);
-      
-      // Added timeout and better error handling
-      const response = await axios.get(searchUrl, { timeout: 10000 });
-      
-      console.log("API Response:", response.data); // Debug log
-
-      if (!response.data || !response.data.data || !response.data.data.length) {
-        return api.sendMessage("❌ No results found for your search.", threadID, messageID);
+      // Check if results exist
+      if (!songs || songs.length === 0) {
+        return api.sendMessage("❌ No songs found. Please try again with a different name.", threadID, messageID);
       }
 
-      const results = response.data.data;
-      let message = "🎧 Spotify Search Results:\n\n";
-      results.forEach((item, index) => {
-        message += `${index + 1}. ${item.name} - ${item.artists[0].name} (${item.album.release_date.split('-')[0]})\n`;
+      // Store search results for the user
+      global.spotifySelections[senderID] = songs;
+
+      // Create response message with song list
+      let response = "🔍 Here are 5 songs found:\n\n";
+      songs.forEach((song, index) => {
+        response += `${index + 1}. ${song.title} - ${song.artist}\n`;
       });
-      message += "\nReply with the number (1-5) to download";
+      response += "\nReply with the number of the song you want (e.g., 1, 2, 3...)";
 
-      // Write cache with expiration (5 minutes)
-      const cacheData = {
-        senderID,
-        results,
-        timestamp: Date.now()
-      };
-      fs.writeFileSync(cacheFile, JSON.stringify(cacheData));
-
-      await api.sendMessage(message, threadID, (error, info) => {
-        global.GoatBot.onReply.set(info.messageID, {
-          commandName: this.config.name,
-          messageID: info.messageID,
-          author: senderID
-        });
-      }, messageID);
+      // Send song list
+      return api.sendMessage(response, threadID, messageID);
       
-      api.setMessageReaction("✅", messageID, () => {}, true);
-
     } catch (error) {
-      console.error("Search Error:", error);
-      api.sendMessage(`❌ Error: ${error.message}`, threadID, messageID);
-      api.setMessageReaction("❌", messageID, () => {}, true);
+      console.error("Spotify Search Error:", error.message);
+      return api.sendMessage("⚠️ Error searching for the song. Please try again later.", threadID, messageID);
     }
   },
 
-  onReply: async function({ api, event, Reply, args }) {
+  handleReply: async function ({ api, event }) {
     const { threadID, messageID, senderID, body } = event;
-    const cacheFile = path.join(__dirname, "cache", `spotify_cache_${threadID}.json`);
+    
+    // Ensure there are stored selections for this user
+    if (!global.spotifySelections[senderID]) {
+      return api.sendMessage("❌ No song selection found. Please start again using /Spotify [song name].", threadID, messageID);
+    }
 
-    if (!fs.existsSync(cacheFile)) return;
+    const songs = global.spotifySelections[senderID];
+
+    // Check if the user replied with a valid number
+    const songIndex = parseInt(body.trim());
+    if (isNaN(songIndex) || songIndex < 1 || songIndex > songs.length) {
+      return api.sendMessage("⚠️ Invalid selection. Please reply with a number from 1 to 5.", threadID, messageID);
+    }
+
+    // Get the selected song
+    const selectedSong = songs[songIndex - 1];
+    const trackUrl = selectedSong.url; // Spotify track link
+
+    // Send processing message
+    const processingMsg = await api.sendMessage("🎶 Downloading your song, please wait...", threadID, messageID);
 
     try {
-      const cacheData = JSON.parse(fs.readFileSync(cacheFile));
-      if (senderID !== cacheData.senderID) return;
+      // Get download link
+      const downloadRes = await axios.get(`${downloadAPI}${encodeURIComponent(trackUrl)}`);
+      const downloadUrl = downloadRes.data.downloadUrl;
 
-      const selectedNumber = parseInt(body);
-      if (isNaN(selectedNumber) || selectedNumber < 1 || selectedNumber > 5) {
-        return api.sendMessage("❌ Please reply with a valid number (1-5).", threadID, messageID);
+      // Validate the download link
+      if (!downloadUrl) {
+        return api.sendMessage("❌ Failed to get the download link. Try another song.", threadID, messageID);
       }
 
-      const track = cacheData.results[selectedNumber - 1];
-      const downloadUrl = `https://nayan-video-downloader.vercel.app/spotifyDl?url=${encodeURIComponent(track.url)}`;
+      // Define file paths
+      const safeTitle = selectedSong.title.replace(/[^a-zA-Z0-9 \-_]/g, "");
+      const filename = `${safeTitle}.mp3`;
+      const downloadDir = path.join(__dirname, "cache");
+      const downloadPath = path.join(downloadDir, filename);
 
-      api.setMessageReaction("⏳", messageID, () => {}, true);
-      const processingMsg = await api.sendMessage("⬇️ Downloading track... (This may take 20-30 seconds)", threadID, messageID);
+      // Ensure the directory exists
+      if (!fs.existsSync(downloadDir)) {
+        fs.mkdirSync(downloadDir, { recursive: true });
+      }
 
-      // Added timeout and better download handling
-      const response = await axios.get(downloadUrl, {
-        responseType: "stream",
-        timeout: 30000
+      // Download and save the file
+      const file = fs.createWriteStream(downloadPath);
+      await new Promise((resolve, reject) => {
+        https.get(downloadUrl, (response) => {
+          if (response.statusCode === 200) {
+            response.pipe(file);
+            file.on("finish", () => {
+              file.close(resolve);
+            });
+          } else {
+            reject(new Error(`Failed to download file. Status code: ${response.statusCode}`));
+          }
+        }).on("error", (error) => {
+          fs.unlinkSync(downloadPath);
+          reject(new Error(`Error downloading file: ${error.message}`));
+        });
       });
 
-      const tempPath = path.join(__dirname, "cache", `spotify_${Date.now()}.mp3`);
-      const writer = fs.createWriteStream(tempPath);
-      response.data.pipe(writer);
-
-      writer.on("finish", async () => {
-        api.unsendMessage(processingMsg.messageID);
-        api.sendMessage({
-          body: `🎵 Now Playing:\n${track.name}\nArtist: ${track.artists[0].name}\nReleased: ${track.album.release_date.split('-')[0]}`,
-          attachment: fs.createReadStream(tempPath)
-        }, threadID, () => {
-          fs.unlinkSync(tempPath);
-          fs.unlinkSync(cacheFile);
-        }, messageID);
-        api.setMessageReaction("🎶", messageID, () => {}, true);
-      });
-
-      writer.on("error", (err) => {
-        console.error("Download Error:", err);
-        api.sendMessage("❌ Failed to save the audio file", threadID, messageID);
-        fs.unlinkSync(tempPath);
-      });
+      // Send the audio file
+      await api.sendMessage(
+        {
+          attachment: fs.createReadStream(downloadPath),
+          body: `🎵 **Title:** ${selectedSong.title}\n🎤 **Artist:** ${selectedSong.artist}\n📅 **Release Year:** ${selectedSong.year || "Unknown"}`
+        },
+        threadID,
+        () => {
+          fs.unlinkSync(downloadPath); // Cleanup
+          api.unsendMessage(processingMsg.messageID);
+        },
+        messageID
+      );
 
     } catch (error) {
-      console.error("Download Error:", error);
-      api.sendMessage(`❌ Download failed: ${error.message}`, threadID, messageID);
-      api.setMessageReaction("❌", messageID, () => {}, true);
-      if (fs.existsSync(cacheFile)) fs.unlinkSync(cacheFile);
+      console.error("Spotify Download Error:", error.message);
+      return api.sendMessage("⚠️ Failed to download the song. Try again later.", threadID, messageID);
     }
   }
 };
