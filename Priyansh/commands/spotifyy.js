@@ -4,7 +4,7 @@ const path = require('path');
 
 module.exports.config = {
     name: "spotify",
-    version: "1.2.0",
+    version: "1.3.0",
     hasPermssion: 0,
     credits: "Your Name",
     description: "Search and download Spotify tracks",
@@ -26,6 +26,8 @@ module.exports.run = async ({ api, event, args }) => {
         const searchQuery = args.join(" ");
         const searchUrl = `https://nayan-video-downloader.vercel.app/spotify-search?name=${searchQuery}&limit=5`;
         
+        console.log(`🔎 Searching: ${searchQuery}`);
+
         const response = await axios.get(searchUrl);
         const data = response.data;
 
@@ -45,11 +47,12 @@ module.exports.run = async ({ api, event, args }) => {
         api.sendMessage(message, threadID, (err, info) => {
             if (!err) {
                 searchResults[threadID].messageID = info.messageID; // Store message ID for deletion
+                console.log(`✅ List sent successfully in thread ${threadID}`);
             }
         });
 
     } catch (error) {
-        console.error("Error in Spotify command:", error);
+        console.error("❌ Error in Spotify command:", error);
         api.sendMessage("⚠️ Error processing your request. Please try again later.", threadID, messageID);
     }
 };
@@ -65,6 +68,8 @@ module.exports.handleEvent = async ({ api, event }) => {
 
     if (!track) return api.sendMessage("❌ Invalid selection. Please choose a valid number.", threadID, messageID);
 
+    console.log(`🎵 User selected: ${track.name}`);
+
     // Delete the list message
     if (searchResults[threadID].messageID) {
         api.unsendMessage(searchResults[threadID].messageID);
@@ -72,6 +77,8 @@ module.exports.handleEvent = async ({ api, event }) => {
 
     const downloadUrl = `https://nayan-video-downloader.vercel.app/spotifyDl?url=${track.link}`;
     const filePath = path.join(__dirname, 'cache', `${threadID}.mp3`);
+
+    console.log(`⬇️ Downloading from: ${downloadUrl}`);
 
     try {
         const response = await axios({
@@ -84,18 +91,26 @@ module.exports.handleEvent = async ({ api, event }) => {
         response.data.pipe(writer);
 
         writer.on('finish', () => {
+            console.log(`✅ Download complete: ${filePath}`);
+
             api.sendMessage({ 
                 body: `🎶 Now playing: ${track.name}\n👤 Artist: ${track.artists}`, 
                 attachment: fs.createReadStream(filePath) 
             }, threadID, () => {
                 fs.unlinkSync(filePath); // Auto-delete after sending
+                console.log(`🗑️ Deleted file: ${filePath}`);
             });
 
             delete searchResults[threadID]; // Clear stored data
         });
 
+        writer.on('error', (err) => {
+            console.error("❌ File write error:", err);
+            api.sendMessage("⚠️ Error saving the file. Please try again later.", threadID, messageID);
+        });
+
     } catch (error) {
-        console.error("Error downloading track:", error);
+        console.error("❌ Error downloading track:", error);
         api.sendMessage("⚠️ Error downloading the track. Please try again later.", threadID, messageID);
     }
 };
