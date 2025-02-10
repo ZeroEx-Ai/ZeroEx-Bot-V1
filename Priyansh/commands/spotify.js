@@ -1,10 +1,10 @@
+const axios = require('axios');
 const fs = require('fs');
 const path = require('path');
-const axios = require('axios');
 
 module.exports.config = {
     name: "spotify",
-    version: "1.0.0",
+    version: "1.1.0",
     hasPermssion: 0,
     credits: "Your Name",
     description: "Search and download Spotify tracks",
@@ -13,60 +13,7 @@ module.exports.config = {
     cooldowns: 5
 };
 
-module.exports.handleReply = async ({ api, event, handleReply }) => {
-    const { threadID, messageID, body } = event;
-
-    try {
-        // Delete the original list message
-        api.unsendMessage(handleReply.messageID);
-
-        const selectedNumber = parseInt(body.trim());
-        if (isNaN(selectedNumber) throw new Error("Invalid number");
-        
-        const trackIndex = selectedNumber - 1;
-        if (trackIndex < 0 || trackIndex >= handleReply.tracks.length) throw new Error("Number out of range");
-
-        const selectedTrack = handleReply.tracks[trackIndex];
-        
-        // Send downloading status
-        api.sendMessage("⬇️ Downloading audio...", threadID, messageID);
-
-        // Get download URL
-        const downloadResponse = await axios.get(
-            "https://nayan-video-downloader.vercel.app/spotifyDl", 
-            { params: { url: selectedTrack.link } }
-        );
-
-        const audioUrl = downloadResponse.data.downloadUrl;
-        const audioFileName = `spotify_${Date.now()}.mp3`;
-        const cachePath = path.join(__dirname, 'cache', audioFileName);
-
-        // Download and save audio
-        const audioResponse = await axios.get(audioUrl, { responseType: 'stream' });
-        const writer = fs.createWriteStream(cachePath);
-        audioResponse.data.pipe(writer);
-
-        await new Promise((resolve, reject) => {
-            writer.on('finish', resolve);
-            writer.on('error', reject);
-        });
-
-        // Send audio file
-        const message = {
-            body: `🎧 Now Playing:\n\n🎵 Title: ${selectedTrack.name}\n👤 Artist: ${selectedTrack.artists}`,
-            attachment: fs.createReadStream(cachePath)
-        };
-
-        api.sendMessage(message, threadID, () => {
-            // Delete cached audio after sending
-            fs.unlinkSync(cachePath);
-        }, messageID);
-
-    } catch (error) {
-        console.error("Error in reply handler:", error);
-        api.sendMessage("❌ Error processing your request. Please try again.", threadID, messageID);
-    }
-};
+const searchResults = {}; // To store search results temporarily
 
 module.exports.run = async ({ api, event, args }) => {
     const { threadID, messageID } = event;
@@ -86,24 +33,63 @@ module.exports.run = async ({ api, event, args }) => {
             return api.sendMessage("❌ No results found for your search.", threadID, messageID);
         }
 
-        let message = "🎵 Spotify Search Results:\n\n";
-        data.results.forEach((track, index) => {
-            message += `${index + 1}. ${track.name}\n   Artist: ${track.artists}\n\n`;
-        });
-        message += "\n🔢 Reply with the number of the track you want to download";
+        let message = `🎵 Spotify Search Results:\n\n`;
+        searchResults[threadID] = data.results; // Store search results for this thread
 
-        api.sendMessage(message, threadID, (error, info) => {
-            if (!error) {
-                global.client.handleReply.push({
-                    name: this.config.name,
-                    messageID: info.messageID,
-                    tracks: data.results
-                });
+        data.results.forEach((track, index) => {
+            message += `${index + 1}. ${track.name}\n   Artist: ${track.artists}\n   Link: ${track.link}\n\n`;
+        });
+
+        message += `\n🔢 Reply with the number to choose a track`;
+
+        api.sendMessage(message, threadID, (err, info) => {
+            if (!err) {
+                searchResults[threadID].messageID = info.messageID; // Store message ID for deletion
             }
-        }, messageID);
+        });
 
     } catch (error) {
         console.error("Error in Spotify command:", error);
         api.sendMessage("⚠️ Error processing your request. Please try again later.", threadID, messageID);
     }
 };
+
+// Listen for user replies
+module.exports.handleEvent = async ({ api, event }) => {
+    const { threadID, messageID, body, senderID } = event;
+
+    if (!searchResults[threadID] || !/^\d+$/.test(body)) return;
+    
+    const index = parseInt(body) - 1;
+    const track = searchResults[threadID][index];
+
+    if (!track) return api.sendMessage("❌ Invalid selection. Please choose a valid number.", threadID, messageID);
+
+    // Delete the list message
+    if (searchResults[threadID].messageID) {
+        api.unsendMessage(searchResults[threadID].messageID);
+    }
+
+    const downloadUrl = `https://nayan-video-downloader.vercel.app/spotifyDl?url=${track.link}`;
+    
+    try {
+        const response = await axios.get(downloadUrl, { responseType: 'arraybuffer' });
+        const filePath = path.join(__dirname, 'cache', `${senderID}.mp3`);
+        fs.writeFileSync(filePath, response.data);
+
+        api.sendMessage({ 
+            body: `🎶 Now playing: ${track.name}\n👤 Artist: ${track.artists}`, 
+            attachment: fs.createReadStream(filePath) 
+        }, threadID, () => {
+            fs.unlinkSync(filePath); // Auto-delete file after sending
+        });
+
+        delete searchResults[threadID]; // Clear stored data after sending
+
+    } catch (error) {
+        console.error("Error downloading track:", error);
+        api.sendMessage("⚠️ Error downloading the track. Please try again later.", threadID, messageID);
+    }
+};
+
+module.exports.handleReply = module.exports.handleEvent;
