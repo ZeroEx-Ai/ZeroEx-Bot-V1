@@ -4,7 +4,7 @@ const path = require('path');
 
 module.exports.config = {
     name: "spotify",
-    version: "1.1.0",
+    version: "1.2.0",
     hasPermssion: 0,
     credits: "Your Name",
     description: "Search and download Spotify tracks",
@@ -13,7 +13,7 @@ module.exports.config = {
     cooldowns: 5
 };
 
-const searchResults = {}; // To store search results temporarily
+const searchResults = {}; // Store search results temporarily
 
 module.exports.run = async ({ api, event, args }) => {
     const { threadID, messageID } = event;
@@ -37,7 +37,7 @@ module.exports.run = async ({ api, event, args }) => {
         searchResults[threadID] = data.results; // Store search results for this thread
 
         data.results.forEach((track, index) => {
-            message += `${index + 1}. ${track.name}\n   Artist: ${track.artists}\n   Link: ${track.link}\n\n`;
+            message += `${index + 1}. ${track.name}\n   🎤 Artist: ${track.artists}\n   🔗 Link: ${track.link}\n\n`;
         });
 
         message += `\n🔢 Reply with the number to choose a track`;
@@ -56,7 +56,7 @@ module.exports.run = async ({ api, event, args }) => {
 
 // Listen for user replies
 module.exports.handleEvent = async ({ api, event }) => {
-    const { threadID, messageID, body, senderID } = event;
+    const { threadID, messageID, body } = event;
 
     if (!searchResults[threadID] || !/^\d+$/.test(body)) return;
     
@@ -71,20 +71,28 @@ module.exports.handleEvent = async ({ api, event }) => {
     }
 
     const downloadUrl = `https://nayan-video-downloader.vercel.app/spotifyDl?url=${track.link}`;
-    
-    try {
-        const response = await axios.get(downloadUrl, { responseType: 'arraybuffer' });
-        const filePath = path.join(__dirname, 'cache', `${senderID}.mp3`);
-        fs.writeFileSync(filePath, response.data);
+    const filePath = path.join(__dirname, 'cache', `${threadID}.mp3`);
 
-        api.sendMessage({ 
-            body: `🎶 Now playing: ${track.name}\n👤 Artist: ${track.artists}`, 
-            attachment: fs.createReadStream(filePath) 
-        }, threadID, () => {
-            fs.unlinkSync(filePath); // Auto-delete file after sending
+    try {
+        const response = await axios({
+            method: 'get',
+            url: downloadUrl,
+            responseType: 'stream'
         });
 
-        delete searchResults[threadID]; // Clear stored data after sending
+        const writer = fs.createWriteStream(filePath);
+        response.data.pipe(writer);
+
+        writer.on('finish', () => {
+            api.sendMessage({ 
+                body: `🎶 Now playing: ${track.name}\n👤 Artist: ${track.artists}`, 
+                attachment: fs.createReadStream(filePath) 
+            }, threadID, () => {
+                fs.unlinkSync(filePath); // Auto-delete after sending
+            });
+
+            delete searchResults[threadID]; // Clear stored data
+        });
 
     } catch (error) {
         console.error("Error downloading track:", error);
