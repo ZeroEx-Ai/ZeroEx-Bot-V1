@@ -1,12 +1,12 @@
-const axios = require('axios');
-const fs = require('fs');
-const path = require('path');
+const axios = require("axios");
+const fs = require("fs");
+const path = require("path");
 
 module.exports.config = {
     name: "spotify",
-    version: "1.5.2",
+    version: "1.5.3",
     hasPermssion: 0,
-    credits: "Adi.0X",
+    credits: "Adi.0x",
     description: "Search and download Spotify tracks",
     commandCategory: "music",
     usages: "/spotify [song name]",
@@ -76,7 +76,13 @@ module.exports.handleEvent = async ({ api, event }) => {
     }
 
     const downloadUrl = `https://nayan-video-downloader.vercel.app/spotifyDl?url=${track.link}`;
-    const filePath = path.join(__dirname, 'cache', `${threadID}.mp3`);
+    const cacheDir = path.join(__dirname, 'cache');
+
+    if (!fs.existsSync(cacheDir)) {
+        fs.mkdirSync(cacheDir, { recursive: true });
+    }
+
+    const filePath = path.join(cacheDir, `${threadID}.mp3`);
 
     console.log(`⬇️ Downloading from: ${downloadUrl}`);
 
@@ -93,16 +99,16 @@ module.exports.handleEvent = async ({ api, event }) => {
         writer.on('finish', async () => {
             console.log(`✅ Download complete: ${filePath}`);
 
-            // **Check if file exists**
+            // Ensure file exists before sending
             if (!fs.existsSync(filePath)) {
                 console.error("❌ File not found:", filePath);
                 return api.sendMessage("⚠️ Error: File not found. Try again later.", threadID, messageID);
             }
 
-            // **Ensure file is fully written before sending**
-            await new Promise(resolve => setTimeout(resolve, 2000));
+            // Ensure file is fully written before sending
+            await new Promise(resolve => setTimeout(resolve, 3000));
 
-            // **Send the file**
+            // Send the file
             api.sendMessage({ 
                 body: `🎶 Now playing: ${track.name}\n👤 Artist: ${track.artists}`, 
                 attachment: fs.createReadStream(filePath) 
