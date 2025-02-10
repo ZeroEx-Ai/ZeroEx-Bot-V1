@@ -4,7 +4,7 @@ const path = require('path');
 
 module.exports.config = {
     name: "spotify",
-    version: "1.3.0",
+    version: "1.4.0",
     hasPermssion: 0,
     credits: "Your Name",
     description: "Search and download Spotify tracks",
@@ -25,7 +25,7 @@ module.exports.run = async ({ api, event, args }) => {
     try {
         const searchQuery = args.join(" ");
         const searchUrl = `https://nayan-video-downloader.vercel.app/spotify-search?name=${searchQuery}&limit=5`;
-        
+
         console.log(`🔎 Searching: ${searchQuery}`);
 
         const response = await axios.get(searchUrl);
@@ -46,7 +46,7 @@ module.exports.run = async ({ api, event, args }) => {
 
         api.sendMessage(message, threadID, (err, info) => {
             if (!err) {
-                searchResults[threadID].messageID = info.messageID; // Store message ID for deletion
+                searchResults[threadID].messageID = info.messageID;
                 console.log(`✅ List sent successfully in thread ${threadID}`);
             }
         });
@@ -96,9 +96,19 @@ module.exports.handleEvent = async ({ api, event }) => {
             api.sendMessage({ 
                 body: `🎶 Now playing: ${track.name}\n👤 Artist: ${track.artists}`, 
                 attachment: fs.createReadStream(filePath) 
-            }, threadID, () => {
-                fs.unlinkSync(filePath); // Auto-delete after sending
-                console.log(`🗑️ Deleted file: ${filePath}`);
+            }, threadID, (err) => {
+                if (!err) {
+                    console.log(`📤 Sent: ${filePath}`);
+                    setTimeout(() => {
+                        fs.unlink(filePath, (unlinkErr) => {
+                            if (!unlinkErr) {
+                                console.log(`🗑️ Deleted file after delay: ${filePath}`);
+                            }
+                        });
+                    }, 5000); // Delay delete by 5 seconds
+                } else {
+                    console.error("❌ Error sending file:", err);
+                }
             });
 
             delete searchResults[threadID]; // Clear stored data
