@@ -1,12 +1,13 @@
 const axios = require("axios");
 const fs = require("fs");
 const path = require("path");
+const https = require("https");
 
 module.exports.config = {
     name: "spotify",
-    version: "1.5.6",
+    version: "1.6.0",
     hasPermssion: 0,
-    credits: "Adi.0X",
+    credits: "Modified by Adi",
     description: "Search and download Spotify tracks",
     commandCategory: "music",
     usages: "/spotify [song name]",
@@ -76,7 +77,7 @@ module.exports.handleEvent = async ({ api, event }) => {
     }
 
     const downloadUrl = `https://nayan-video-downloader.vercel.app/spotifyDl?url=${track.link}`;
-    const cacheDir = path.join(__dirname, 'cache');
+    const cacheDir = path.join(__dirname, "cache");
 
     if (!fs.existsSync(cacheDir)) {
         fs.mkdirSync(cacheDir, { recursive: true });
@@ -87,59 +88,55 @@ module.exports.handleEvent = async ({ api, event }) => {
     console.log(`⬇️ Downloading from: ${downloadUrl}`);
 
     try {
-        const response = await axios({
-            method: 'get',
-            url: downloadUrl,
-            responseType: 'stream'
-        });
-
-        const writer = fs.createWriteStream(filePath);
-        response.data.pipe(writer);
-
-        writer.on('finish', async () => {
-            console.log(`✅ Download complete: ${filePath}`);
-
-            // Ensure file exists before sending
-            if (!fs.existsSync(filePath)) {
-                console.error("❌ File not found:", filePath);
-                return api.sendMessage("⚠️ Error: File not found. Try again later.", threadID, messageID);
-            }
-
-            // **30 seconds delay before sending**
-            console.log("⏳ Waiting 30 seconds before sending...");
-            await new Promise(resolve => setTimeout(resolve, 30000));
-
-            // Send only the audio file
-            api.sendMessage({ 
-                attachment: fs.createReadStream(filePath) 
-            }, threadID, (sendErr) => {
-                if (!sendErr) {
-                    console.log(`📤 Sent: ${filePath}`);
-
-                    // Delete file after 5 seconds
-                    setTimeout(() => {
-                        if (fs.existsSync(filePath)) {
-                            fs.unlink(filePath, (unlinkErr) => {
-                                if (!unlinkErr) {
-                                    console.log(`🗑️ Deleted file after delay: ${filePath}`);
-                                } else {
-                                    console.error("❌ Error deleting file:", unlinkErr);
-                                }
-                            });
-                        }
-                    }, 5000);
+        // **Downloading using HTTPS stream**
+        const file = fs.createWriteStream(filePath);
+        await new Promise((resolve, reject) => {
+            https.get(downloadUrl, (response) => {
+                if (response.statusCode === 200) {
+                    response.pipe(file);
+                    file.on("finish", () => {
+                        file.close(resolve);
+                    });
                 } else {
-                    console.error("❌ Error sending file:", sendErr);
+                    reject(new Error(`Failed to download file. Status: ${response.statusCode}`));
                 }
+            }).on("error", (error) => {
+                fs.unlinkSync(filePath);
+                reject(new Error(`Error downloading file: ${error.message}`));
             });
-
-            delete searchResults[threadID]; // Clear stored data
         });
 
-        writer.on('error', (err) => {
-            console.error("❌ File write error:", err);
-            api.sendMessage("⚠️ Error saving the file. Please try again later.", threadID, messageID);
+        console.log(`✅ Download complete: ${filePath}`);
+
+        // **Ensure file exists before sending**
+        if (!fs.existsSync(filePath)) {
+            console.error("❌ File not found:", filePath);
+            return api.sendMessage("⚠️ Error: File not found. Try again later.", threadID, messageID);
+        }
+
+        // **Send only the audio file**
+        api.sendMessage({ attachment: fs.createReadStream(filePath) }, threadID, (sendErr) => {
+            if (!sendErr) {
+                console.log(`📤 Sent: ${filePath}`);
+
+                // **Delete file after sending**
+                setTimeout(() => {
+                    if (fs.existsSync(filePath)) {
+                        fs.unlink(filePath, (unlinkErr) => {
+                            if (!unlinkErr) {
+                                console.log(`🗑️ Deleted file: ${filePath}`);
+                            } else {
+                                console.error("❌ Error deleting file:", unlinkErr);
+                            }
+                        });
+                    }
+                }, 5000);
+            } else {
+                console.error("❌ Error sending file:", sendErr);
+            }
         });
+
+        delete searchResults[threadID]; // Clear stored data
 
     } catch (error) {
         console.error("❌ Error downloading track:", error);
