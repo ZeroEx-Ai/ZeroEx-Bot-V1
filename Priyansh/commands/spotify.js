@@ -4,7 +4,7 @@ const path = require("path");
 
 module.exports.config = {
     name: "spotify",
-    version: "1.5.3",
+    version: "1.5.4",
     hasPermssion: 0,
     credits: "Adi.0X",
     description: "Search and download Spotify tracks",
@@ -105,8 +105,8 @@ module.exports.handleEvent = async ({ api, event }) => {
                 return api.sendMessage("⚠️ Error: File not found. Try again later.", threadID, messageID);
             }
 
-            // Ensure file is fully written before sending
-            await new Promise(resolve => setTimeout(resolve, 3000));
+            // Wait 5 seconds to ensure file is fully written
+            await new Promise(resolve => setTimeout(resolve, 5000));
 
             // Send the file
             api.sendMessage({ 
@@ -116,13 +116,18 @@ module.exports.handleEvent = async ({ api, event }) => {
                 if (!sendErr) {
                     console.log(`📤 Sent: ${filePath}`);
 
+                    // Delete file after 5 seconds
                     setTimeout(() => {
-                        fs.unlink(filePath, (unlinkErr) => {
-                            if (!unlinkErr) {
-                                console.log(`🗑️ Deleted file after delay: ${filePath}`);
-                            }
-                        });
-                    }, 5000); // Delete after 5 seconds
+                        if (fs.existsSync(filePath)) {
+                            fs.unlink(filePath, (unlinkErr) => {
+                                if (!unlinkErr) {
+                                    console.log(`🗑️ Deleted file after delay: ${filePath}`);
+                                } else {
+                                    console.error("❌ Error deleting file:", unlinkErr);
+                                }
+                            });
+                        }
+                    }, 5000);
                 } else {
                     console.error("❌ Error sending file:", sendErr);
                 }
