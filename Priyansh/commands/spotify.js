@@ -4,7 +4,7 @@ const path = require("path");
 
 module.exports.config = {
     name: "spotify",
-    version: "1.5.5",
+    version: "1.5.6",
     hasPermssion: 0,
     credits: "Adi.0X",
     description: "Search and download Spotify tracks",
@@ -109,9 +109,8 @@ module.exports.handleEvent = async ({ api, event }) => {
             console.log("⏳ Waiting 30 seconds before sending...");
             await new Promise(resolve => setTimeout(resolve, 30000));
 
-            // Send the file
+            // Send only the audio file
             api.sendMessage({ 
-                body: `🎶 Now playing: ${track.name}\n👤 Artist: ${track.artists}`, 
                 attachment: fs.createReadStream(filePath) 
             }, threadID, (sendErr) => {
                 if (!sendErr) {
