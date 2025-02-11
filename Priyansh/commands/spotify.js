@@ -6,7 +6,7 @@ module.exports.config = {
     name: "spotify",
     version: "1.5.3",
     hasPermssion: 0,
-    credits: "Adi.0x",
+    credits: "Adi.0X",
     description: "Search and download Spotify tracks",
     commandCategory: "music",
     usages: "/spotify [song name]",
