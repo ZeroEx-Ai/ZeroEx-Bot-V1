@@ -4,7 +4,7 @@ const path = require("path");
 
 module.exports.config = {
     name: "spotify",
-    version: "1.5.4",
+    version: "1.5.5",
     hasPermssion: 0,
     credits: "Adi.0X",
     description: "Search and download Spotify tracks",
@@ -105,8 +105,9 @@ module.exports.handleEvent = async ({ api, event }) => {
                 return api.sendMessage("⚠️ Error: File not found. Try again later.", threadID, messageID);
             }
 
-            // Wait 5 seconds to ensure file is fully written
-            await new Promise(resolve => setTimeout(resolve, 5000));
+            // **30 seconds delay before sending**
+            console.log("⏳ Waiting 30 seconds before sending...");
+            await new Promise(resolve => setTimeout(resolve, 30000));
 
             // Send the file
             api.sendMessage({ 
