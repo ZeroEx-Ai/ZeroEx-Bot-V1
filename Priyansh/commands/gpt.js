@@ -6,9 +6,9 @@ module.exports.config = {
     name: "gpt",
     version: "1.0",
     hasPermssion: 0,
-    credits: "Adi.0X (Modified from Nayan)",
+    credits: "Adi.0X",
     description: "Chat with GPT or generate an image",
-    commandCategory: "AI",
+    commandCategory: "Ai",
     usages: "[text]",
     cooldowns: 5,
 };
