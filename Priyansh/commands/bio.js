@@ -4,7 +4,7 @@ module.exports.config = {
 	hasPermssion: 2,
 	credits: "Adi.0X",
 	description: "Change bot id bio",
-	commandCategory: "Bot Account",
+	commandCategory: "Bot id",
 	usages: "bio [text]",
   cooldowns: 5
   
