@@ -6,7 +6,7 @@ module.exports.config = {
     hasPermssion: 0,
     credits: "Adi.0X",
     description: "Ask anything from Gemini AI",
-    commandCategory: "ai",
+    commandCategory: "Ai",
     usages: "[ask]",
     cooldowns: 2,
     dependencies: { "axios": "1.4.0" }
