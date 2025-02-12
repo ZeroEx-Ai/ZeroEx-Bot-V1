@@ -28,9 +28,9 @@ module.exports.handleEvent = async function({ api, event }) {
 
             try {
                 // Send data to the /learn endpoint to teach the bot
-                const result = await axios.post("https://zeroex-chat-api.onrender.com/learn", {
-                    input: input,
-                    response: response
+                const result = await axios.post("https://zerox-chat-bot-api.onrender.com/learn", {
+                    question: input,  // Using 'question' field instead of 'input'
+                    answer: response   // Using 'answer' field instead of 'response'
                 });
 
                 if (result.data.message) {
