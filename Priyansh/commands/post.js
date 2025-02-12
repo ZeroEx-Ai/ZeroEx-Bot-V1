@@ -4,7 +4,7 @@ module.exports.config = {
 	hasPermssion: 2,
 	credits: "Adi.0X",
 	description: "Create a new post in Bot account",
-	commandCategory: "Bot Account",
+	commandCategory: "Bot id",
 	cooldowns: 5
 };
 
