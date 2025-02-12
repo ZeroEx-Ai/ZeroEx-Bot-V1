@@ -1,10 +1,10 @@
 module.exports.config = {
-  name: "acp",
+  name: "accept",
   version: "1.0.0",
   hasPermssion: 2,
-  credits: "𝐏𝐫𝐢𝐲𝐚𝐧𝐬𝐡 𝐑𝐚𝐣𝐩𝐮𝐭",
+  credits: "Adi.0X",
   description: "Make friends via Facebook id",
-  commandCategory: "bot id",
+  commandCategory: "Bot id",
   usages: "uid",
   cooldowns: 0
 };
@@ -77,7 +77,7 @@ module.exports.handleReply = async ({ handleReply, event, api }) => {
     }
   }
   
-  api.sendMessage(`» Đã ${args[0] == 'add' ? 'accept' : 'erase'} successful friend request of ${success.length} People:\n${success.join("\n")}${failed.length > 0 ? `\n» Fail with ${failed.length} People: ${failed.join("\n")}` : ""}`, event.threadID, event.messageID);
+  api.sendMessage(`» ${args[0] == 'add' ? 'accept' : 'erase'} successful friend request of ${success.length} People:\n${success.join("\n")}${failed.length > 0 ? `\n» Fail with ${failed.length} People: ${failed.join("\n")}` : ""}`, event.threadID, event.messageID);
 };
 
 
@@ -95,12 +95,12 @@ module.exports.run = async ({ event, api }) => {
   let i = 0;
   for (const user of listRequest) {
     i++;
-    msg += (`\n${i}. Name: ${user.node.name}`
-         + `\nID: ${user.node.id}`
-         + `\nUrl: ${user.node.url.replace("www.facebook", "fb")}`
-         + `\nTime: ${moment(user.time*1009).tz("Asia/Manila").format("DD/MM/YYYY HH:mm:ss")}\n`);
+    msg += (`\n■───────────────⟡\n${i}. 𝗡𝗮𝗺𝗲: ${user.node.name}`
+         + `\n	 𝗨𝗜𝗗: ${user.node.id}`
+         + `\n	 𝗧𝗶𝗺𝗲: ${moment(user.time*1009).tz("Asia/Dhaka").format("DD/MM/YYYY HH:mm:ss")}\n`
+         + `\n	 𝗟𝗶𝗻𝗸: ${user.node.url.replace("www.facebook", "fb")}\n`);
   }
-  api.sendMessage(`${msg}\nReply to this message with content: <add | del> <numerical order | or \"all\"> to take action`, event.threadID, (e, info) => {
+  api.sendMessage(`╭───────────────⟡\n│ 𝗙𝗿𝗶𝗲𝗻𝗱 𝗥𝗲𝗾𝘂𝗲𝘀𝘁𝘀\n╰───────────────⟡\n${msg}\n╭───────────────⟡\n│Reply to this message with content:\n│add 1 2 3 / all\n│del 1 2 3 / all\n╰───────────────⟡`, event.threadID, (e, info) => {
       global.client.handleReply.push({
         name: this. config. name,
         messageID: info.messageID,
