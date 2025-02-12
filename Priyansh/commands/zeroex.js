@@ -32,7 +32,7 @@ module.exports.handleEvent = async function({ api, event }) {
         }
 
         try {
-            const response = await axios.post("https://zeroex-chat-api.onrender.com/chat", { message: query });
+            const response = await axios.post("https://zerox-chat-bot-api.onrender.com/chat", { message: query });
 
             if (response.data && response.data.reply) {
                 sendMessage(response.data.reply);
@@ -50,7 +50,7 @@ module.exports.handleEvent = async function({ api, event }) {
 
         if (messageReply.body === lastReplyData.reply && senderID !== api.getCurrentUserID()) {
             try {
-                const response = await axios.post("https://zeroex-chat-api.onrender.com/chat", { message: message });
+                const response = await axios.post("https://zerox-chat-bot-api.onrender.com/chat", { message: message });
 
                 if (response.data && response.data.reply) {
                     sendMessage(response.data.reply);
