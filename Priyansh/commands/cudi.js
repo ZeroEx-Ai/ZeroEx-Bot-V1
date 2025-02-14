@@ -1,48 +1,62 @@
-let isCudiActive = true; // ডিফল্টভাবে চালু থাকবে
-
 module.exports.config = {
     name: "cudi",
-    version: "1.0.0",
+    version: "2.0.0",
     hasPermssion: 1,
-    credits: "Adi.0X",
-    description: "মুরগি ট্যাগ করুন\nসেই ব্যক্তিকে আত্মা কলিং বলা যেতে পারে",
-    commandCategory: "nsfw",
-    usages: " please @mention",
-    cooldowns: 10,
-    dependencies: {
-        "fs-extra": "",
-        "axios": ""
-    }
-}
+    credits: "...",
+    description: "একাধিক ব্যক্তিকে ট্যাগ করে ক্রমাগত মেসেজ পাঠাবে, /cudi off দিলে বন্ধ হবে।",
+    commandCategory: "fun",
+    usages: "/cudi @mention1 @mention2 ... | /cudi off",
+    cooldowns: 10
+};
+
+let activeThreads = {}; // চালু থাকা থ্রেড ট্র্যাক করবে
 
 module.exports.run = async function({ api, event, args }) {
-    if (args[0] === "off") {  
-        isCudiActive = false;  
-        return api.sendMessage("✅ Cudi বন্ধ করা হয়েছে!", event.threadID);
+    let threadID = event.threadID;
+    let command = args[0];
+
+    // যদি "/cudi off" দেয়া হয়, তাহলে বন্ধ করে দেবে
+    if (command === "off") {
+        if (activeThreads[threadID]) {
+            clearInterval(activeThreads[threadID]); // লুপ বন্ধ
+            delete activeThreads[threadID];
+            return api.sendMessage("✅ Cudi বন্ধ হয়ে গেছে!", threadID);
+        } else {
+            return api.sendMessage("Cudi আগে থেকেই বন্ধ আছে!", threadID);
+        }
     }
 
-    if (args[0] === "on") {  
-        isCudiActive = true;  
-        return api.sendMessage("✅ Cudi চালু করা হয়েছে!", event.threadID);
+    // মেনশন করা ইউজারদের বের করা
+    let mentions = event.mentions;
+    if (Object.keys(mentions).length === 0) {
+        return api.sendMessage("⚠️ দয়া করে অন্তত একজনকে @mention করুন!", threadID);
     }
 
-    if (!isCudiActive) return api.sendMessage("❌ Cudi বর্তমানে বন্ধ রয়েছে! অন করতে `/cudi on` লিখুন।", event.threadID);
+    let mentionData = Object.keys(mentions).map(id => ({ id, tag: mentions[id] }));
     
-    var mention = Object.keys(event.mentions)[0];
-    if (!mention) 
-        return api.sendMessage("বস,আপনি কাকে চুদতে চান, দয়া করে @mention করুন!", event.threadID);
-
-    let name = event.mentions[mention];
-    var arraytag = [{ id: mention, tag: name }];
-
-    var a = function (message) { 
-        if (!isCudiActive) return; // যদি বন্ধ থাকে, তাহলে কিছুই না পাঠায়
-        api.sendMessage({ body: message + " " + name, mentions: arraytag }, event.threadID); 
+    // যদি আগে থেকেই চালু থাকে, তাহলে বার্তা দেয়
+    if (activeThreads[threadID]) {
+        return api.sendMessage("⚠️ Cudi ইতিমধ্যে চালু আছে! বন্ধ করতে /cudi off ব্যবহার করুন।", threadID);
     }
 
-    setTimeout(() => { a("চুদা লো"); }, 0);
-    setTimeout(() => { a("খাংকির পোলা তর মারে চুদি 🥰"); }, 3000);
-    setTimeout(() => { a("খাংকির পোলা তর কচি বোন রে চুদি 😍"); }, 5000);
-    setTimeout(() => { a("মাদারচোদ তর আম্মু পম পম খাংকির পো 🐰"); }, 7000);
-    setTimeout(() => { a("খাংকির পোলা তর কচি ভুদায় ভুদায় কামর দিমু 💔"); }, 9000);
-}
+    // লুপ চালু করা
+    activeThreads[threadID] = setInterval(() => {
+        let messages = [
+            "চুদা লো {name}!",
+            "খাংকির পোলা {name} তর মারে চুদি 🥰।",
+            "খাংকির পোলা {name} তর কচি বোন রে চুদি 😍..",
+            "মাদারচোদ {name} তর আম্মু পম পম খাংকির পো 🐰",
+            "খাংকির পোলা {name} তর কচি ভুদায় ভুদায় কামর দিমু 💔!"
+        ];
+
+        mentionData.forEach((mention, index) => {
+            setTimeout(() => {
+                let msg = messages[Math.floor(Math.random() * messages.length)].replace("{name}", mention.tag);
+                api.sendMessage({ body: msg, mentions: [mention] }, threadID);
+            }, index * 5000); // প্রতিটি মেসেজের মধ্যে ৫ সেকেন্ড গ্যাপ
+        });
+
+    }, 20000); // প্রতি ২০ সেকেন্ডে একবার রিপিট হবে
+
+    return api.sendMessage("✅ Cudi চালু হয়েছে!", threadID);
+};
