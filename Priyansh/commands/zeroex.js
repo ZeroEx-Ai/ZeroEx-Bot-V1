@@ -7,7 +7,7 @@ module.exports.config = {
     credits: "ZeroEx",
     description: "Chat Bot mentioned or replied",
     commandCategory: "Ai",
-    usages: "type zerox/zeroex/bot without prefix and reply",
+    usages: "type zerox/zeroex without prefix and reply",
     cooldowns: 5,
     dependencies: {
         axios: ""
@@ -24,7 +24,7 @@ module.exports.handleEvent = async function({ api, event }) {
     const sendMessage = (text) => api.sendMessage(text, threadID, messageID);
 
     // **Only trigger if message starts with "zeroex" or "zerox"**
-    if (message.startsWith("zeroex") || message.startsWith("zerox") || message.startsWith("bot")) {
+    if (message.startsWith("zeroex") || message.startsWith("zerox")) {
         const query = message.split(" ").slice(1).join(" ").trim();
 
         if (!query) {
