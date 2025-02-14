@@ -6,7 +6,7 @@ module.exports.config = {
     hasPermission: 2,
     credits: "ZeroEx",
     description: "Forget a learned response",
-    commandCategory: "Chat bot",
+    commandCategory: "System",
     usages: "[input] [response]",
     cooldowns: 5,
     dependencies: {
