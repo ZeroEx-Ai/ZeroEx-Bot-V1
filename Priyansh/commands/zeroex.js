@@ -5,9 +5,9 @@ module.exports.config = {
     version: "1.3.0",
     hasPermission: 0,
     credits: "ZeroEx",
-    description: "Fetches response from zeroex-chat-api only when directly mentioned or replied",
-    commandCategory: "Chat bot",
-    usages: "[message]",
+    description: "Chat Bot mentioned or replied",
+    commandCategory: "Ai",
+    usages: "type zerox/zeroex/bot without prefix and reply",
     cooldowns: 5,
     dependencies: {
         axios: ""
@@ -24,11 +24,11 @@ module.exports.handleEvent = async function({ api, event }) {
     const sendMessage = (text) => api.sendMessage(text, threadID, messageID);
 
     // **Only trigger if message starts with "zeroex" or "zerox"**
-    if (message.startsWith("zeroex") || message.startsWith("zerox")) {
+    if (message.startsWith("zeroex") || message.startsWith("zerox") || message.startsWith("bot")) {
         const query = message.split(" ").slice(1).join(" ").trim();
 
         if (!query) {
-            return sendMessage("Please provide a message. Example: zeroex hi");
+            return sendMessage("Ha bolo");
         }
 
         try {
