@@ -4,9 +4,9 @@ module.exports.config = {
     name: "zteach",
     version: "1.0.0",
     hasPermission: 2,
-    credits: "ZeroEx",
+    credits: "Adi.0X",
     description: "Learn and teach responses to the bot",
-    commandCategory: "Chat bot",
+    commandCategory: "Ai",
     usages: "[input] [response]",
     cooldowns: 5,
     dependencies: {
