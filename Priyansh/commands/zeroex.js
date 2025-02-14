@@ -28,7 +28,7 @@ module.exports.handleEvent = async function({ api, event }) {
         const query = message.split(" ").slice(1).join(" ").trim();
 
         if (!query) {
-            return sendMessage("Ha bolo");
+            return sendMessage("");
         }
 
         try {
