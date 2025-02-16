@@ -4,10 +4,10 @@ module.exports.config = {
     name: "zeroex",
     version: "1.3.0",
     hasPermission: 0,
-    credits: "ZeroEx",
+    credits: "Adi.0X",
     description: "Chat Bot mentioned or replied",
     commandCategory: "Ai",
-    usages: "type zerox/zeroex without prefix and reply",
+    usages: "type zerox/zeroex/bot without prefix and reply",
     cooldowns: 5,
     dependencies: {
         axios: ""
@@ -15,6 +15,16 @@ module.exports.config = {
 };
 
 const lastReplies = new Map(); // Store last responses for each thread
+const randomReplies = [
+    "Ha Jaan Bolo",
+    "Bolo Jaan, sunchi",
+    "ki",
+    "Ha jaan",
+    "bolo babu",
+    "dakle?",
+    "Hmm 🥰",
+    "Jaan, bolo toh ki dorkar?"
+];
 
 module.exports.handleEvent = async function({ api, event }) {
     const { threadID, messageID, body, senderID, messageReply } = event;
@@ -23,12 +33,12 @@ module.exports.handleEvent = async function({ api, event }) {
     const message = body.trim().toLowerCase();
     const sendMessage = (text) => api.sendMessage(text, threadID, messageID);
 
-    // **Only trigger if message starts with "zeroex" or "zerox"**
-    if (message.startsWith("zeroex") || message.startsWith("zerox")) {
+    // **Only trigger if message starts with "zeroex" or "zerox" or "bot"**
+    if (message.startsWith("zeroex") || message.startsWith("zerox") || message.startsWith("bot")) {
         const query = message.split(" ").slice(1).join(" ").trim();
 
         if (!query) {
-            return sendMessage("");
+            return sendMessage(randomReplies[Math.floor(Math.random() * randomReplies.length)]);
         }
 
         try {
