@@ -2,11 +2,11 @@ module.exports.config = {
 	name: "pingv2",
 	version: "0.0.3",
 	hasPermssion: 1,
-	credits: "𝐏𝐫𝐢𝐲𝐚𝐧𝐬𝐡 𝐑𝐚𝐣𝐩𝐮𝐭",
+	credits: "Adi.0X",
 	description: "Tag all members",
-	commandCategory: "system",
+	commandCategory: "Group Admin",
 	usages: "[Text]",
-	cooldowns: 80
+	cooldowns: 1
 };
 
 module.exports.run = async function({ api, event, args, Threads }) {
