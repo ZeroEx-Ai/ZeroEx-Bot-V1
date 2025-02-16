@@ -114,7 +114,7 @@ module.exports.run = async function({ api, event, args }) {
             }, index * 1000); // প্রতিটি মেসেজের মধ্যে 1 সেকেন্ড গ্যাপ
         });
 
-    }, 61000); // প্রতি 61 সেকেন্ডে একবার রিপিট হবে
+    }, 1000); // প্রতি 61 সেকেন্ডে একবার রিপিট হবে
 
     return api.sendMessage("✅ Cudi চালু হয়েছে!", threadID);
 };
