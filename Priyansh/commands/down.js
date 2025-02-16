@@ -7,8 +7,8 @@ module.exports = {
     name: "down",
     version: "1.0.0",
     hasPermssion: 0,
-    credits: "Modified by You",
-    description: "Download videos from Facebook or other platforms",
+    credits: "Adi.0X",
+    description: "Download videos from Facebook, Instagram, Threads, Tweeter, TikTok, Pinterest, Capcut and Likee",
     commandCategory: "Media",
     usages: "/down [video URL]",
     cooldowns: 5,
@@ -68,7 +68,7 @@ module.exports = {
 
     } catch (error) {
       console.error(`Error: ${error.message}`);
-      api.sendMessage("❌ Failed to download video. Please check the URL and try again.", event.threadID, event.messageID);
+      api.sendMessage("❎ Failed to download video.\nPlease give only URLs from Facebook, Instagram, Threads, Twitter, TikTok, Pinterest, CapCut, and Likee.", event.threadID, event.messageID);
     }
   },
 };
