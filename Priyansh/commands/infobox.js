@@ -8,9 +8,9 @@ module.exports.config = {
   name: "infobox",
   version: "2.0.0",
   hasPermssion: 0,
-  credits: "𝐏𝐫𝐢𝐲𝐚𝐧𝐬𝐡 𝐑𝐚𝐣𝐩𝐮𝐭",
-  description: "Xem thông tin box của bạn",
-  commandCategory: "Thông tin",
+  credits: "Adi.0X",
+  description: "View your box information by Pic",
+  commandCategory: "Group",
   usages: "infobox",
   cooldowns: 10,
   dependencies: {
