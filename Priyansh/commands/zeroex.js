@@ -2,7 +2,7 @@ const axios = require("axios");
 
 module.exports.config = {
     name: "zeroex",
-    version: "1.3.0",
+    version: "1.3.1",
     hasPermission: 0,
     credits: "Adi.0X",
     description: "Chat Bot mentioned or replied",
@@ -18,11 +18,11 @@ const lastReplies = new Map(); // Store last responses for each thread
 const randomReplies = [
     "Ha Jaan Bolo",
     "Bolo Jaan, sunchi",
-    "ki",
-    "Ha jaan",
-    "bolo babu",
-    "dakle?",
-    "Hmm 🥰",
+    "Bolo re, kono problem naki?",
+    "Ki obostha? Bolo toh!",
+    "Ei meye/pagla, bol ki chao!",
+    "Bolo, tor jonno ami ready!",
+    "Hmm, sunchi, ki chao?",
     "Jaan, bolo toh ki dorkar?"
 ];
 
@@ -33,7 +33,7 @@ module.exports.handleEvent = async function({ api, event }) {
     const message = body.trim().toLowerCase();
     const sendMessage = (text) => api.sendMessage(text, threadID, messageID);
 
-    // **Only trigger if message starts with "zeroex" or "zerox" or "bot"**
+    // **Trigger if message starts with "zeroex", "zerox", or "bot"**
     if (message.startsWith("zeroex") || message.startsWith("zerox") || message.startsWith("bot")) {
         const query = message.split(" ").slice(1).join(" ").trim();
 
@@ -54,11 +54,14 @@ module.exports.handleEvent = async function({ api, event }) {
             sendMessage("Ei samay kichu bhul hoise. Doya kore porer somoy try korun.");
         }
     } 
-    // **Reply Detection: Only respond if the message is a reply to bot's last message**
-    else if (messageReply && lastReplies.has(threadID)) {
+    // **Reply Detection: Respond if replying to bot's last message or a random reply**
+    else if (messageReply) {
         const lastReplyData = lastReplies.get(threadID);
 
-        if (messageReply.body === lastReplyData.reply && senderID !== api.getCurrentUserID()) {
+        if (
+            (lastReplyData && messageReply.body === lastReplyData.reply && senderID !== api.getCurrentUserID()) ||
+            randomReplies.includes(messageReply.body)
+        ) {
             try {
                 const response = await axios.post("https://zerox-chat-bot-api.onrender.com/chat", { message: message });
 
