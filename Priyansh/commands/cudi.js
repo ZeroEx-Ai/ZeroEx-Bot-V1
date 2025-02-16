@@ -111,7 +111,7 @@ module.exports.run = async function({ api, event, args }) {
             setTimeout(() => {
                 let msg = messages[Math.floor(Math.random() * messages.length)].replace("{name}", mention.tag);
                 api.sendMessage({ body: msg, mentions: [mention] }, threadID);
-            }, index * 750); // প্রতিটি মেসেজের মধ্যে 0.75 সেকেন্ড গ্যাপ
+            }, index * 1000); // প্রতিটি মেসেজের মধ্যে 1 সেকেন্ড গ্যাপ
         });
 
     }, 61000); // প্রতি 61 সেকেন্ডে একবার রিপিট হবে
