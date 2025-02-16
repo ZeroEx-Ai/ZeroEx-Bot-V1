@@ -6,7 +6,7 @@ module.exports.config = {
     hasPermission: 2,
     credits: "Adi.0X",
     description: "Learn and teach responses to the bot",
-    commandCategory: "Ai",
+    commandCategory: "System",
     usages: "[input] [response]",
     cooldowns: 5,
     dependencies: {
