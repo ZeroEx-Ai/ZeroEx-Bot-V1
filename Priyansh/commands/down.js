@@ -50,7 +50,7 @@ module.exports = {
       writer.on('finish', () => {
         api.sendMessage(
           {
-            body: `✅ *Download Complete!*\n📌 *Title:* ${videoTitle}\n\n🔗 *Here is your video:*`,
+            body: `${videoTitle}`,
             attachment: fs.createReadStream(filePath),
           },
           event.threadID,
