@@ -10,7 +10,7 @@ module.exports.config = {
         "axios": "",
         "fs-extra": ""
   },
-  cooldowns: 10
+  cooldowns: 1
 }
 
 module.exports.run = async function ({ args, Users, Threads, api, event, Currencies }) {
