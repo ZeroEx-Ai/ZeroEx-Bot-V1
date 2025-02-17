@@ -5,12 +5,6 @@ const nayanDownloader = require("nayan-videos-downloader"); // আপডেট�
 // যদি প্রয়োজন হয়, এখানে youtube-search-api বা simple-youtube-api ব্যবহার করতে পারেন
 const Youtube = require('youtube-search-api');
 
-/**
- * YouTube থেকে গান ডাউনলোড করে নির্দিষ্ট ফাইলে সেভ করে।
- * @param {string} link - YouTube লিঙ্ক
- * @param {string} filePath - ফাইল সেভ করার পাথ
- * @returns {Promise<object>} - গানটির শিরোনাম ও প্রসেসিং সময়সহ অবজেক্ট
- */
 async function downloadMusicFromYoutube(link, filePath) {
   if (!link) return Promise.reject('Link Not Found');
 
