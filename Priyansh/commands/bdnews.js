@@ -1,3 +1,7 @@
+const fs = require("fs");
+const path = require("path");
+const axios = require("axios");
+
 module.exports.config = {
   name: "bdnews",
   version: "1.1.1",
@@ -13,14 +17,12 @@ module.exports.config = {
 };
 
 module.exports.run = async function ({ event, api, args }) {
-  const axios = global.nodemodule["axios"];
   const { threadID, messageID } = event;
 
   if (args.length < 2) {
     return api.sendMessage("দয়া করে query এবং category দিন।\nউদাহরণ: /bdnews খেলাধুলা top", threadID, messageID);
   }
 
-  // query এবং category ইনপুট হিসাবে গ্রহণ করা
   const query = args[0];
   const category = args[1];
 
@@ -33,14 +35,12 @@ module.exports.run = async function ({ event, api, args }) {
       }
     });
 
-    // API response থেকে "results" অ্যারে ব্যবহার করা
     const articles = response.data.results;
     if (!articles || articles.length === 0) {
       return api.sendMessage(`"${query}" ক্যাটেগরির কোনো সংবাদ পাওয়া যায়নি।`, threadID, messageID);
     }
 
-    // সংবাদগুলোর শিরোনামের তালিকা তৈরি করা
-    let listMessage = `📰 "${query}" ক্যাটেগরির সংবাদ তালিকা:\n\n`;
+    let listMessage = `📰 **"${query}" ক্যাটেগরির সংবাদ তালিকা**:\n\n`;
     articles.forEach((article, index) => {
       listMessage += `${index + 1}. ${article.title}\n`;
     });
@@ -76,23 +76,47 @@ module.exports.handleReply = async function({ event, api, handleReply }) {
 
   const article = articles[index];
 
-  // সংবাদ বিস্তারিত তথ্য
-  let detailMessage = `📰 শিরোনাম: ${article.title}\n`;
-  detailMessage += `📝 বিবরণ: ${article.description || "উপলব্ধ নয়"}\n`;
-  detailMessage += `🔗 উৎস: ${article.source_name || "উপলব্ধ নয়"}\n`;
-  detailMessage += `📅 তারিখ: ${article.pubDate || "উপলব্ধ নয়"}\n`;
-  detailMessage += `🔗 লিংক: ${article.link || "উপলব্ধ নয়"}`;
+  let detailMessage = `📰 **শিরোনাম:** ${article.title}\n`;
+  detailMessage += `📝 **বিবরণ:** ${article.description || "উপলব্ধ নয়"}\n`;
+  detailMessage += `🔗 **উৎস:** ${article.source_name || "উপলব্ধ নয়"}\n`;
+  detailMessage += `📅 **তারিখ:** ${article.pubDate || "উপলব্ধ নয়"}\n`;
+  detailMessage += `🔗 **লিংক:** ${article.link || "উপলব্ধ নয়"}`;
 
-  // যদি ছবি থাকে, তাহলে attachment হিসেবে পাঠানো হবে
+  // যদি ছবির URL থাকে
   if (article.image_url) {
     try {
-      const stream = await global.utils.getStreamFromURL(article.image_url);
+      // নিশ্চিত করুন যে cache ফোল্ডার আছে, না থাকলে তৈরি করুন
+      const cacheDir = path.join(__dirname, "cache");
+      if (!fs.existsSync(cacheDir)) fs.mkdirSync(cacheDir);
+
+      // একটি ইউনিক নাম সহ ফাইল পাথ তৈরি করুন
+      const filePath = path.join(cacheDir, `${Date.now()}.jpg`);
+
+      // ছবি ডাউনলোড করে ফাইল হিসেবে সংরক্ষণ করা
+      const response = await axios({
+        url: article.image_url,
+        method: "GET",
+        responseType: "stream"
+      });
+      const writer = fs.createWriteStream(filePath);
+      response.data.pipe(writer);
+      await new Promise((resolve, reject) => {
+        writer.on("finish", resolve);
+        writer.on("error", reject);
+      });
+
+      // ছবি attachment হিসেবে পাঠানো, পাঠানোর পর ফাইলটি মুছে ফেলা হবে
       return api.sendMessage({
         body: detailMessage,
-        attachment: stream
-      }, threadID, messageID);
+        attachment: fs.createReadStream(filePath)
+      }, threadID, messageID, (err, info) => {
+        // ফাইল ডিলিট করা
+        fs.unlink(filePath, (unlinkErr) => {
+          if (unlinkErr) console.error("ফাইল ডিলিট করতে ব্যর্থ:", filePath, unlinkErr);
+        });
+      });
     } catch (err) {
-      // ছবি ডাউনলোডে সমস্যা হলে শুধু টেক্সট পাঠানো হবে
+      console.error("ছবি ডাউনলোড/প্রসেসিং ত্রুটি:", err);
       return api.sendMessage(detailMessage, threadID, messageID);
     }
   } else {
