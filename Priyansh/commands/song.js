@@ -1,7 +1,7 @@
 const fs = require("fs");
 const axios = require("axios");
 const { createReadStream, unlinkSync, statSync } = require("fs-extra");
-const nayanDownloader = require("nayan-video-downloader");
+const nayanDownloader = require("nayan-videos-downloader");
 const Youtube = require("youtube-search-api");
 
 /**
