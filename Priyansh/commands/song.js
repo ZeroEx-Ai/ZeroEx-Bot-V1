@@ -5,14 +5,13 @@ const nayanDownloader = require("nayan-videos-downloader");
 const Youtube = require("youtube-search-api");
 
 /**
- * YouTube থেকে গান ডাউনলোড করে নির্দিষ্ট পাথে সেভ করে।
+ * YouTube লিঙ্ক থেকে গান ডাউনলোড করে নির্দিষ্ট ফাইলে সেভ করে
  * @param {string} link - YouTube লিঙ্ক
  * @param {string} filePath - ফাইল সেভ করার পাথ
- * @returns {Promise<object>} - গানটির শিরোনাম ও প্রসেসিং সময়সহ অবজেক্ট
+ * @returns {Promise<object>} - গানটির শিরোনাম ও প্রসেসিং সময়সহ অবজেক্ট
  */
 async function downloadMusicFromYoutube(link, filePath) {
   if (!link) return Promise.reject("Link Not Found");
-
   const timestart = Date.now();
 
   try {
@@ -27,7 +26,6 @@ async function downloadMusicFromYoutube(link, filePath) {
       })
         .then((response) => {
           const writeStream = fs.createWriteStream(filePath);
-
           response.data
             .pipe(writeStream)
             .on("finish", async () => {
@@ -73,7 +71,7 @@ module.exports = {
   },
 
   /**
-   * handleReply: ইউজারের রেপ্লাই পেলে (যখন সার্চের ফলাফল থেকে গান নির্বাচন করা হবে)
+   * handleReply: যখন ইউজার সার্চের ফলাফল থেকে কোনো বিকল্প নির্বাচন করবে
    */
   handleReply: async function ({ api, event, handleReply }) {
     try {
@@ -89,7 +87,6 @@ module.exports = {
           () => unlinkSync(filePath),
           event.messageID
         );
-
       api.unsendMessage(handleReply.messageID);
       return api.sendMessage(
         {
@@ -108,9 +105,9 @@ module.exports = {
   },
 
   /**
-   * start: ইউজার যখন song কমান্ড চালাবে তখন এই ফাংশনটি চলবে
+   * run: ইউজার যখন song কমান্ড কল করবে তখন এই ফাংশনটি চলবে
    */
-  start: async function ({ nayan, events, args }) {
+  run: async function ({ nayan, events, args }) {
     if (!args.length)
       return nayan.reply(
         "Please provide a song name or YouTube URL.",
@@ -152,7 +149,7 @@ module.exports = {
         console.log(e);
       }
     } else {
-      // সার্চ মোড: ইউটিউবে সার্চ করে ফলাফল দেখানো হবে
+      // সার্চ মোড: ইউটিউবে সার্চ করে ফলাফল দেখাবে
       try {
         let link = [],
           msg = "",
