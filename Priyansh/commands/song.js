@@ -67,7 +67,7 @@ module.exports = {
     dependencies: {
       axios: "",
       fs: "",
-      "nayan-video-downloader": "",
+      "nayan-videos-downloader": "",
       "simple-youtube-api": "",
     },
   },
