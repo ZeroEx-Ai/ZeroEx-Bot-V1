@@ -44,7 +44,7 @@ module.exports.run = async function ({ event, api, args }) {
     articles.forEach((article, index) => {
       listMessage += `${index + 1}. ${article.title}\n`;
     });
-    listMessage += "\nবিস্তারিত জানার জন্য উপরের তালিকা থেকে সংখ্যাটি রিপ্লাই করুন।";
+    listMessage += "\n\nবিস্তারিত জানার জন্য উপরের তালিকা থেকে সংখ্যাটি রিপ্লাই করুন।";
 
     return api.sendMessage(listMessage, threadID, (err, info) => {
       global.client.handleReply.push({
@@ -76,11 +76,11 @@ module.exports.handleReply = async function({ event, api, handleReply }) {
 
   const article = articles[index];
 
-  let detailMessage = `📰 **শিরোনাম:** ${article.title}\n`;
-  detailMessage += `📝 **বিবরণ:** ${article.description || "উপলব্ধ নয়"}\n`;
-  detailMessage += `🔗 **উৎস:** ${article.source_name || "উপলব্ধ নয়"}\n`;
-  detailMessage += `📅 **তারিখ:** ${article.pubDate || "উপলব্ধ নয়"}\n`;
-  detailMessage += `🔗 **লিংক:** ${article.link || "উপলব্ধ নয়"}`;
+  let detailMessage = `📰 শিরোনাম: ${article.title}\n\n`;
+  detailMessage += `📝 বিবরণ: ${article.description || "উপলব্ধ নয়"}\n\n`;
+  detailMessage += `🔗 উৎস: ${article.source_name || "উপলব্ধ নয়"}\n`;
+  detailMessage += `📅 তারিখ: ${article.pubDate || "উপলব্ধ নয়"}\n`;
+  detailMessage += `🔗 লিংক: ${article.link || "উপলব্ধ নয়"}`;
 
   // যদি ছবির URL থাকে
   if (article.image_url) {
