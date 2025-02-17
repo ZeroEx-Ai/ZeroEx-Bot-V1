@@ -1,150 +1,147 @@
 const axios = require("axios");
-const fs = require("fs-extra");
+const fs = require("fs");
+const path = require("path");
 
-module.exports.config = {
+module.exports = {
+  config: {
     name: "spotify",
     version: "1.0.0",
-    hasPermission: 0,
-    credits: "Modified by Adi",
-    description: "Search and download songs from Spotify",
+    hasPermssion: 0,
+    credits: "Nayan (Modified by Adi)",
+    description: "Download music from Spotify by URL or search",
     commandCategory: "Media",
-    usages: "/spotify [song name or URL]",
+    usages: "[spotify url|search]",
     cooldowns: 5,
-};
-
-module.exports.handleReply = async ({ api, event, handleReply }) => {
-    const { threadID, messageID, body } = event;
-    const selectedIndex = parseInt(body) - 1;
-
-    if (isNaN(selectedIndex) || selectedIndex < 0 || selectedIndex >= handleReply.results.length) {
-        return api.sendMessage("❌ Invalid selection. Please enter a valid number.", threadID, messageID);
+    dependencies: {
+      axios: ""
     }
+  },
 
-    const track = handleReply.results[selectedIndex];
-    const downloadUrl = `https://nayan-video-downloader.vercel.app/spotifyDl?url=${track.link}`;
-    const filePath = `${__dirname}/cache/${track.name}.mp3`;
-
+  handleReply: async function ({ api, event, handleReply }) {
     try {
-        api.sendMessage(`⬇️ Downloading **${track.name}** by **${track.artists}**...`, threadID, messageID);
+      const selectedIndex = parseInt(event.body) - 1;
+      const songData = handleReply.results[selectedIndex];
 
-        const writer = fs.createWriteStream(filePath);
-        const response = await axios({
-            url: downloadUrl,
-            method: "GET",
-            responseType: "stream",
-        });
+      if (!songData) return api.sendMessage("⚠ Invalid selection.", event.threadID, event.messageID);
 
-        response.data.pipe(writer);
+      const res = await axios.get(`https://nayan-video-downloader.vercel.app/spotifyDl?url=${songData.link}`);
+      const { title, artistNames, duration, download_url } = res.data.data;
 
-        writer.on("finish", async () => {
-            const fileSize = fs.statSync(filePath).size;
-            if (fileSize > 26214400) {
-                fs.unlinkSync(filePath);
-                return api.sendMessage("⚠️ The file is too large to send (over 25MB).", threadID, messageID);
-            }
+      const filePath = path.join(__dirname, "cache", `${title}.mp3`);
+      const writer = fs.createWriteStream(filePath);
 
-            api.unsendMessage(handleReply.messageID);
+      const fileStream = await axios({
+        url: download_url,
+        method: "GET",
+        responseType: "stream"
+      });
+      fileStream.data.pipe(writer);
 
-            api.sendMessage(
-                {
-                    body: `🎵 **Title:** ${track.name}\n🎤 **Artist(s):** ${track.artists}\n`,
-                    attachment: fs.createReadStream(filePath),
-                },
-                threadID,
-                () => fs.unlink(filePath),
-                messageID
-            );
-        });
-    } catch (error) {
-        console.error("❌ Error downloading song:", error);
-        api.sendMessage("⚠️ Failed to download the song. Please try again later.", threadID, messageID);
-    }
-};
-
-module.exports.run = async ({ api, event, args }) => {
-    const { threadID, messageID } = event;
-    const input = args.join(" ");
-
-    if (!input) {
-        return api.sendMessage("🔍 Please provide a song name or a Spotify URL.", threadID, messageID);
-    }
-
-    // **Direct Download from URL**
-    if (input.startsWith("https://open.spotify.com/")) {
-        try {
-            const response = await axios.get(`https://nayan-video-downloader.vercel.app/spotifyDl?url=${input}`);
-            const track = response.data.data;
-            const filePath = `${__dirname}/cache/${track.title}.mp3`;
-
-            api.sendMessage(`⬇️ Downloading **${track.title}** by **${track.artistNames.join(", ")}**...`, threadID, messageID);
-
-            const writer = fs.createWriteStream(filePath);
-            const fileStream = await axios({
-                url: track.download_url,
-                method: "GET",
-                responseType: "stream",
-            });
-
-            fileStream.data.pipe(writer);
-
-            writer.on("finish", async () => {
-                const fileSize = fs.statSync(filePath).size;
-                if (fileSize > 26214400) {
-                    fs.unlinkSync(filePath);
-                    return api.sendMessage("⚠️ The file is too large to send (over 25MB).", threadID, messageID);
-                }
-
-                api.sendMessage(
-                    {
-                        body: `🎵 **Title:** ${track.title}\n🎤 **Artist(s):** ${track.artistNames.join(", ")}\n`,
-                        attachment: fs.createReadStream(filePath),
-                    },
-                    threadID,
-                    () => fs.unlink(filePath),
-                    messageID
-                );
-            });
-        } catch (error) {
-            console.error("❌ Error downloading song:", error);
-            api.sendMessage("⚠️ Failed to download the song. Please check the URL and try again.", threadID, messageID);
-        }
-        return;
-    }
-
-    // **Search for Songs**
-    try {
-        const response = await axios.get(`https://nayan-video-downloader.vercel.app/spotify-search?name=${encodeURIComponent(input)}&limit=5`);
-        const results = response.data.results;
-
-        if (!results.length) {
-            return api.sendMessage("❌ No results found for your search.", threadID, messageID);
+      writer.on("finish", async () => {
+        const fileSize = fs.statSync(filePath).size;
+        if (fileSize > 26214400) {
+          fs.unlinkSync(filePath);
+          return api.sendMessage("⚠ The file is too large to send (over 25MB).", event.threadID, event.messageID);
         }
 
-        let message = "🎶 **Spotify Search Results:**\n\n";
-        results.forEach((track, index) => {
-            message += `${index + 1}. **${track.name}**\n   🎤 Artist: ${track.artists}\n   🔗 Link: ${track.link}\n\n`;
-        });
-
-        message += "🔢 **Reply with a number to download your desired song.**";
+        api.unsendMessage(handleReply.messageID);
+        api.setMessageReaction("✅", event.messageID, () => {}, true);
 
         api.sendMessage(
-            {
-                body: message,
-            },
-            threadID,
-            (err, info) => {
-                global.client.handleReply.push({
-                    type: "reply",
-                    name: module.exports.config.name,
-                    messageID: info.messageID,
-                    author: event.senderID,
-                    results,
-                });
-            },
-            messageID
+          {
+            body: `🎵 Title: ${title}\n🎤 Artist(s): ${artistNames.join(", ")}\n⏳ Duration: ${duration}`,
+            attachment: fs.createReadStream(filePath)
+          },
+          event.threadID,
+          () => fs.unlinkSync(filePath),
+          event.messageID
         );
+      });
     } catch (error) {
-        console.error("❌ Error searching songs:", error);
-        api.sendMessage("⚠️ Failed to search for the song. Please try again later.", threadID, messageID);
+      api.setMessageReaction("❌", event.messageID, () => {}, true);
+      api.sendMessage("❌ Error while processing your request. Try again later.", event.threadID, event.messageID);
     }
+  },
+
+  run: async function ({ api, event, args }) {
+    const input = args.join(" ");
+    if (!input) {
+      return api.sendMessage("⚠ Please provide a Spotify URL or search keyword.", event.threadID, event.messageID);
+    }
+
+    if (input.startsWith("https://open.spotify.com/")) {
+      try {
+        const res = await axios.get(`https://nayan-video-downloader.vercel.app/spotifyDl?url=${input}`);
+        const { title, artistNames, duration, download_url } = res.data.data;
+
+        api.setMessageReaction("⌛", event.messageID, () => {}, true);
+
+        const filePath = path.join(__dirname, "cache", `${title}.mp3`);
+        const writer = fs.createWriteStream(filePath);
+
+        const fileStream = await axios({
+          url: download_url,
+          method: "GET",
+          responseType: "stream"
+        });
+        fileStream.data.pipe(writer);
+
+        writer.on("finish", async () => {
+          const fileSize = fs.statSync(filePath).size;
+          if (fileSize > 26214400) {
+            fs.unlinkSync(filePath);
+            return api.sendMessage("⚠ The file is too large to send (over 25MB).", event.threadID, event.messageID);
+          }
+
+          api.setMessageReaction("✅", event.messageID, () => {}, true);
+
+          api.sendMessage(
+            {
+              body: `🎵 Title: ${title}\n🎤 Artist(s): ${artistNames.join(", ")}\n⏳ Duration: ${duration}`,
+              attachment: fs.createReadStream(filePath)
+            },
+            event.threadID,
+            () => fs.unlinkSync(filePath),
+            event.messageID
+          );
+        });
+      } catch (error) {
+        api.setMessageReaction("❌", event.messageID, () => {}, true);
+        api.sendMessage("❌ Failed to download the song. Please check the URL and try again.", event.threadID, event.messageID);
+      }
+    } else {
+      try {
+        const res = await axios.get(`https://nayan-video-downloader.vercel.app/spotify-search?name=${encodeURIComponent(input)}&limit=5`);
+        const results = res.data.results;
+
+        if (!results.length) {
+          return api.sendMessage("⚠ No results found for your search.", event.threadID, event.messageID);
+        }
+
+        let message = "🔎 Search Results:\n\n";
+        results.forEach((song, index) => {
+          message += `${index + 1}. ${song.name} by ${song.artists.join(", ")}\n\n`;
+        });
+        message += "Reply with the number to select a song to download.";
+
+        api.sendMessage(
+          { body: message },
+          event.threadID,
+          (error, info) => {
+            global.client.handleReply.push({
+              type: "reply",
+              name: this.config.name,
+              messageID: info.messageID,
+              author: event.senderID,
+              results
+            });
+          },
+          event.messageID
+        );
+      } catch (error) {
+        api.setMessageReaction("❌", event.messageID, () => {}, true);
+        api.sendMessage("❌ Failed to search for the song. Please try again later.", event.threadID, event.messageID);
+      }
+    }
+  }
 };
