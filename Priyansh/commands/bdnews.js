@@ -6,7 +6,7 @@ module.exports.config = {
   name: "bdnews",
   version: "1.1.1",
   hasPermssion: 0,
-  credits: "YourName",
+  credits: "Adi.0X",
   description: "বাংলাদেশ সংবাদ দেখায় (কাস্টম query এবং category সহ)",
   commandCategory: "News",
   usages: "/bdnews [query] [category] (উদাহরণ: /bdnews খেলাধুলা top)",
