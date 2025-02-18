@@ -3,15 +3,17 @@ module.exports.config = {
     version: "1.0.1",
     hasPermssion: 0,
     credits: "Adi.0X",
-    description: "Pair with people in the group",
+    description: "Pair with people in the group (opposite gender if available)",
     commandCategory: "Fun",
     cooldowns: 5,
     dependencies: {
         "axios": "",
-        "fs-extra": ""
+        "fs-extra": "",
+        "jimp": ""
     }
 }
-module.exports.onLoad = async() => {
+
+module.exports.onLoad = async () => {
     const { resolve } = global.nodemodule["path"];
     const { existsSync, mkdirSync } = global.nodemodule["fs-extra"];
     const { downloadFile } = global.utils;
@@ -41,7 +43,8 @@ async function makeImage({ one, two }) {
     
     let circleOne = await jimp.read(await circle(avatarOne));
     let circleTwo = await jimp.read(await circle(avatarTwo));
-    pairing_img.composite(circleOne.resize(85, 85), 355, 100).composite(circleTwo.resize(75, 75), 250, 140);
+    pairing_img.composite(circleOne.resize(85, 85), 355, 100)
+               .composite(circleTwo.resize(75, 75), 250, 140);
     
     let raw = await pairing_img.getBufferAsync("image/png");
     
@@ -51,31 +54,73 @@ async function makeImage({ one, two }) {
     
     return pathImg;
 }
+
 async function circle(image) {
     const jimp = require("jimp");
     image = await jimp.read(image);
     image.circle();
     return await image.getBufferAsync("image/png");
 }
+
 module.exports.run = async function({ api, event, args, Users, Threads, Currencies }) {
-  const axios = require("axios");
+    const axios = require("axios");
     const fs = require("fs-extra");
     const { threadID, messageID, senderID } = event;
     var tl = ['21%', '67%', '19%', '37%', '17%', '96%', '52%', '62%', '76%', '83%', '100%', '99%', "0%", "48%"];
-        var tle = tl[Math.floor(Math.random() * tl.length)];
-        let dataa = await api.getUserInfo(event.senderID);
-        let namee = await dataa[event.senderID].name
-        let loz = await api.getThreadInfo(event.threadID);
-        var emoji = loz.participantIDs;
-        var id = emoji[Math.floor(Math.random() * emoji.length)];
-        let data = await api.getUserInfo(id);
-        let name = await data[id].name
-        var arraytag = [];
-                arraytag.push({id: event.senderID, tag: namee});
-                arraytag.push({id: id, tag: name});
-        
-        var sex = await data[id].gender;
-        var gender = sex == 2 ? "Male🧑" : sex == 1 ? "Female👩‍🦰" : "Tran Duc Bo";
-var one = senderID, two = id;
-    return makeImage({ one, two }).then(path => api.sendMessage({ body:`Congratulations ${namee} was paired with ${name}\nPair odds are: ${tle}`, mentions: arraytag, attachment: fs.createReadStream(path) }, threadID, () => fs.unlinkSync(path), messageID));
-  }
+    var tle = tl[Math.floor(Math.random() * tl.length)];
+
+    // Get sender's info
+    let senderData = await api.getUserInfo(senderID);
+    let senderName = senderData[senderID].name;
+    let senderGender = senderData[senderID].gender; // 1: female, 2: male, etc.
+
+    // Get thread info
+    let threadInfo = await api.getThreadInfo(threadID);
+    let allIDs = threadInfo.participantIDs;
+
+    // Remove sender and bot from candidates
+    const botID = api.getCurrentUserID();
+    allIDs = allIDs.filter(id => id != senderID && id != botID);
+
+    // Determine target gender based on sender's gender:
+    // If sender is female (1), target male (2). If sender is male (2), target female (1).
+    let targetGender = (senderGender == 1 ? 2 : senderGender == 2 ? 1 : null);
+
+    // Filter candidates with opposite gender if possible
+    let filteredIDs = [];
+    if (targetGender !== null) {
+        let candidatesInfo = await Promise.all(allIDs.map(id => api.getUserInfo(id).catch(e => null)));
+        for (let i = 0; i < allIDs.length; i++) {
+            let info = candidatesInfo[i];
+            if (info && info[allIDs[i]] && info[allIDs[i]].gender == targetGender) {
+                filteredIDs.push(allIDs[i]);
+            }
+        }
+    }
+    // If no candidate with the opposite gender is found, fallback to all candidates
+    let candidateIDs = filteredIDs.length > 0 ? filteredIDs : allIDs;
+
+    if (candidateIDs.length === 0) {
+         return api.sendMessage("No candidate available for pairing.", threadID, messageID);
+    }
+
+    // Select a random candidate from the candidateIDs array
+    let selectedCandidateID = candidateIDs[Math.floor(Math.random() * candidateIDs.length)];
+    let candidateData = await api.getUserInfo(selectedCandidateID);
+    let candidateName = candidateData[selectedCandidateID].name;
+    
+    // Prepare mentions for the message
+    var arraytag = [];
+    arraytag.push({ id: senderID, tag: senderName });
+    arraytag.push({ id: selectedCandidateID, tag: candidateName });
+    
+    // Use makeImage to generate the pairing image
+    var one = senderID, two = selectedCandidateID;
+    return makeImage({ one, two }).then(path =>
+        api.sendMessage({
+            body: `Congratulations ${senderName} was paired with ${candidateName}\nPair odds are: ${tle}`,
+            mentions: arraytag,
+            attachment: fs.createReadStream(path)
+        }, threadID, () => fs.unlinkSync(path), messageID)
+    );
+}
