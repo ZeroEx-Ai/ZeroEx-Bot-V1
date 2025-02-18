@@ -2,10 +2,10 @@ module.exports.config = {
 	name: "ip",	
 	version: "1.0.0", 
 	hasPermssion: 0,
-	credits: "NTKhang",
+	credits: "Adi.0X",
 	description: "View your ip information or other ip", 
-	commandCategory: "other",
-	usages: "",
+	commandCategory: "Tools",
+	usages: "ip address",
 	cooldowns: 5, 
 	dependencies: "",
 };
@@ -26,7 +26,7 @@ var infoip = (await axios.get(`http://ip-api.com/json/${args.join(' ')}?fields=6
  🗺️Continent: ${infoip.continent}
 🏳️Nation: ${infoip.country}
 🎊Country Code: ${infoip.countryCode}
-🕋Area: ${infoip.region}
+📌Area: ${infoip.region}
 ⛱️Region/State: ${infoip.regionName}
 🏙️City: ${infoip.city}
 🛣️District: ${infoip.district}
