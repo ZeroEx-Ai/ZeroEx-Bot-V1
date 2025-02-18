@@ -4,7 +4,7 @@ module.exports.config = {
 	hasPermssion: 0,
 	credits: "Adi.0X",
 	description: "See weather information in the area",
-	commandCategory: "other",
+	commandCategory: "Tools",
 	usages: "[Location]",
 	cooldowns: 5,
 	dependencies: {
